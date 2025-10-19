@@ -47,7 +47,7 @@ app.use("*", async (req: Request, res: Response) => {
     const url = req.originalUrl.replace(base, "");
 
     let template: string;
-    let render: () => { html: string };
+    let render: (url: string) => { html: string };
 
     if (!isProduction && vite) {
       // Always read fresh template in development
@@ -62,7 +62,7 @@ app.use("*", async (req: Request, res: Response) => {
       render = (await import("./dist/server/entry-server.js")).render;
     }
 
-    const { html: appHtml } = render();
+    const { html: appHtml } = render(url);
 
     const html = template
       .replace(`<!--app-head-->`, "")
