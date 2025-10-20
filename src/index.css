@@ -1,3 +1,16 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-theme-purple: #a167ff;
+  --color-theme-purple-dark: #9747ff;
+  --color-theme-purple-light: #c084fc;
+  --color-theme-red: #d22a2a;
+  --color-theme-red-light: #ffd2ce;
+  --color-theme-green: #22a022;
+  --color-theme-green-light: #d2ffd2;
+}
+
+body {
+  min-height: 100vh;
+  color: #000;
+}

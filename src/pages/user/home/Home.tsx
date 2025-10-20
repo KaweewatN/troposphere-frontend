@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export default function Home() {
   return (
-    <main>
+    <div>
       <h1>Home</h1>
       <p>Welcome to the site. Browse posts:</p>
       <ul>
@@ -13,6 +13,6 @@ export default function Home() {
           <Link to="/posts/example-post">Example post (slug)</Link>
         </li>
       </ul>
-    </main>
+    </div>
   );
 }
