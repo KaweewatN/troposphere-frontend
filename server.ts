@@ -4,12 +4,28 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import type { Request, Response } from "express";
 import type { ViteDevServer } from "vite";
+import type { QueryClient } from "@tanstack/react-query";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const isProduction = process.env.NODE_ENV === "production";
 const port = process.env.PORT || 5173;
 const base = process.env.BASE || "/";
+
+// Type for render function
+interface RenderOptions {
+  prefetchData?: (queryClient: QueryClient, url: string) => Promise<void>;
+}
+
+interface RenderResult {
+  html: string;
+  dehydratedState?: unknown;
+}
+
+type RenderFunction = (
+  url: string,
+  options?: RenderOptions
+) => Promise<RenderResult>;
 
 // Cached production assets
 const templateHtml = isProduction
@@ -18,6 +34,17 @@ const templateHtml = isProduction
       "utf-8"
     )
   : "";
+
+// Safe serialization for embedding in HTML
+function safeSerialize(data: unknown): string {
+  const json = JSON.stringify(data);
+  return json
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/\//g, "\\u002f")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
 
 const app = express();
 
@@ -47,7 +74,7 @@ app.use("*", async (req: Request, res: Response) => {
     const url = req.originalUrl.replace(base, "");
 
     let template: string;
-    let render: (url: string) => { html: string };
+    let render: RenderFunction;
 
     if (!isProduction && vite) {
       // Always read fresh template in development
@@ -56,16 +83,36 @@ app.use("*", async (req: Request, res: Response) => {
         "utf-8"
       );
       template = await vite.transformIndexHtml(url, template);
-      render = (await vite.ssrLoadModule("/src/entry-server.tsx")).render;
+      render = (await vite.ssrLoadModule("/src/entry-server.tsx"))
+        .render as RenderFunction;
     } else {
       template = templateHtml;
-      render = (await import("./dist/server/entry-server.js")).render;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const importedRender = (await import("./dist/server/entry-server.js"))
+        .render as any;
+
+      // Wrap to ensure it returns a Promise with the right shape
+      render = async (
+        url: string,
+        options?: RenderOptions
+      ): Promise<RenderResult> => {
+        const result = await Promise.resolve(importedRender(url, options));
+        return result;
+      };
     }
 
-    const { html: appHtml } = render(url);
+    // Render the app and get dehydrated state
+    const { html: appHtml, dehydratedState } = await render(url);
+
+    // Inject dehydrated state into HTML
+    const stateScript = dehydratedState
+      ? `<script>window.__REACT_QUERY_STATE__ = ${safeSerialize(
+          dehydratedState
+        )};</script>`
+      : "";
 
     const html = template
-      .replace(`<!--app-head-->`, "")
+      .replace(`<!--app-head-->`, stateScript)
       .replace(`<!--app-html-->`, appHtml);
 
     res.status(200).set({ "Content-Type": "text/html" }).send(html);

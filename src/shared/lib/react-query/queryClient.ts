@@ -1,10 +1,10 @@
 import { QueryClient } from "@tanstack/react-query";
 
 /**
- * React Query client configuration
- * Provides default options for queries and mutations
+ * Default query client options
+ * Used for both server and client query clients
  */
-export const queryClient = new QueryClient({
+const defaultQueryClientOptions = {
   defaultOptions: {
     queries: {
       // Time before a query is considered stale (5 minutes)
@@ -17,10 +17,12 @@ export const queryClient = new QueryClient({
       retry: 3,
 
       // Delay between retries (exponential backoff)
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retryDelay: (attemptIndex: number) =>
+        Math.min(1000 * 2 ** attemptIndex, 30000),
 
       // Don't refetch on window focus in development
-      refetchOnWindowFocus: import.meta.env.PROD,
+      refetchOnWindowFocus:
+        typeof window !== "undefined" && import.meta.env.PROD,
 
       // Refetch on reconnect
       refetchOnReconnect: true,
@@ -33,4 +35,39 @@ export const queryClient = new QueryClient({
       retryDelay: 1000,
     },
   },
-});
+};
+
+/**
+ * Create a new QueryClient instance
+ * For SSR: create a new instance per request on the server
+ * For CSR: use the singleton client on the client
+ */
+export function createQueryClient() {
+  return new QueryClient(defaultQueryClientOptions);
+}
+
+/**
+ * Singleton query client for client-side rendering
+ * Note: On the server, always use createQueryClient() for per-request instances
+ */
+let browserQueryClient: QueryClient | undefined = undefined;
+
+export function getQueryClient() {
+  // Server-side: always create a new client
+  if (typeof window === "undefined") {
+    return createQueryClient();
+  }
+
+  // Client-side: create singleton on first use
+  if (!browserQueryClient) {
+    browserQueryClient = createQueryClient();
+  }
+
+  return browserQueryClient;
+}
+
+/**
+ * Legacy export for backward compatibility
+ * @deprecated Use getQueryClient() instead
+ */
+export const queryClient = getQueryClient();

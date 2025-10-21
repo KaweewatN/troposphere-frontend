@@ -1,1 +1,2 @@
-export { queryClient } from "./queryClient";
+export { queryClient, getQueryClient, createQueryClient } from "./queryClient";
+export { safeSerialize, safeDeserialize } from "./serialize";

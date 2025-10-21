@@ -1,11 +1,17 @@
 import { Routes, Route } from "react-router-dom";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "./shared/lib/react-query";
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import { queryClient as defaultQueryClient } from "./shared/lib/react-query";
 import Navigation from "./components/navigation/Navigation";
 import Home from "./pages/user/home/Home";
 import NotFound from "./pages/not-found/NotFound";
 
-export default function App() {
+interface AppProps {
+  queryClient?: QueryClient;
+}
+
+export default function App({
+  queryClient = defaultQueryClient,
+}: AppProps = {}) {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="mx-auto min-h-screen max-w-screen-sm py-5">
