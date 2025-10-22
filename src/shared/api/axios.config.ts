@@ -1,11 +1,15 @@
 import axios from "axios";
+import { getAccessToken, clearAuthTokens } from "../lib/auth";
 
 /**
  * Axios instance configuration
  * Configure base URL and default headers here
+ *
+ * In development: Uses Vite proxy (no baseURL needed)
+ * In production: Set VITE_API_BASE_URL in .env
  */
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "",
   headers: {
     "Content-Type": "application/json",
   },
@@ -16,8 +20,8 @@ export const api = axios.create({
  */
 api.interceptors.request.use(
   (config) => {
-    // Add auth token if available
-    const token = localStorage.getItem("auth_token");
+    // Add auth token if available (uses memory cache for performance)
+    const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -37,7 +41,7 @@ api.interceptors.response.use(
     // Handle 401 unauthorized
     if (error.response?.status === 401) {
       // Clear auth and redirect to login
-      localStorage.removeItem("auth_token");
+      clearAuthTokens();
       window.location.href = "/signin";
     }
     return Promise.reject(error);

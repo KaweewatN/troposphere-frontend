@@ -6,6 +6,28 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
 
+  // Proxy all API requests to avoid CORS issues in development
+  server: {
+    proxy: {
+      "/auth": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+      "/clubs": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+      "/items": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+      "/users": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+    },
+  },
+
   build: {
     minify: false, // Disable minification for SSR
   },

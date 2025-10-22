@@ -26,7 +26,10 @@ interface NavItemProps extends VariantProps<typeof navItemVariants> {
 }
 
 const NavItem = memo(({ to, icon, label, currentPath }: NavItemProps) => {
-  const isActive = currentPath === to;
+  // Check if current path matches the nav item's path
+  // For search, match both /search and /search-clubs (with or without query params)
+  const isActive =
+    to === "/search" ? currentPath.startsWith("/search") : currentPath === to;
 
   return (
     <li>
@@ -54,7 +57,7 @@ export default function Navigation() {
           currentPath={currentPath}
         />
         <NavItem
-          to="/search"
+          to="/search-clubs"
           icon={<Search />}
           label="Search"
           currentPath={currentPath}

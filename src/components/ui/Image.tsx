@@ -20,6 +20,7 @@ export interface ImageProps
   onLoadingComplete?: (img: HTMLImageElement) => void;
   fill?: boolean;
   sizes?: string;
+  defaultImage?: string; // Add default image prop
 }
 
 /**
@@ -33,6 +34,7 @@ export interface ImageProps
  * - Error handling
  * - Intersection Observer for lazy loading
  * - Responsive image support
+ * - Default image fallback
  */
 export const Image: React.FC<ImageProps> = ({
   src,
@@ -50,11 +52,13 @@ export const Image: React.FC<ImageProps> = ({
   sizes,
   className,
   style,
+  defaultImage, // Default image URL
   ...props
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority);
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -75,7 +79,7 @@ export const Image: React.FC<ImageProps> = ({
         });
       },
       {
-        rootMargin: "50px", // Start loading 50px before the image enters viewport
+        rootMargin: "50px",
         threshold: 0.01,
       }
     );
@@ -92,6 +96,7 @@ export const Image: React.FC<ImageProps> = ({
   // Handle image load
   const handleLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
     setIsLoaded(true);
+    setIsLoading(false);
     if (onLoadingComplete && imgRef.current) {
       onLoadingComplete(imgRef.current);
     }
@@ -101,6 +106,7 @@ export const Image: React.FC<ImageProps> = ({
   // Handle image error
   const handleError = (event: React.SyntheticEvent<HTMLImageElement>) => {
     setHasError(true);
+    setIsLoading(false);
     props.onError?.(event);
   };
 
@@ -150,6 +156,7 @@ export const Image: React.FC<ImageProps> = ({
       style={containerStyle}
       className={clsx("image-container", className)}
       data-loaded={isLoaded}
+      data-loading={isLoading}
     >
       {/* Blur placeholder */}
       {placeholder === "blur" && blurDataURL && !isLoaded && (
@@ -162,8 +169,22 @@ export const Image: React.FC<ImageProps> = ({
         />
       )}
 
+      {/* Default image while loading */}
+      {defaultImage && isLoading && !hasError && (
+        <img
+          src={defaultImage}
+          alt="Loading..."
+          aria-hidden="true"
+          style={imageStyle}
+          className={clsx(
+            "transition-opacity duration-300 opacity-100",
+            fill && "absolute inset-0"
+          )}
+        />
+      )}
+
       {/* Loading skeleton */}
-      {!isLoaded && !hasError && placeholder === "empty" && (
+      {!isLoaded && !hasError && !defaultImage && placeholder === "empty" && (
         <div
           className="absolute inset-0 bg-gray-200 animate-pulse"
           style={{ backgroundColor: "#e5e7eb" }}
@@ -191,34 +212,48 @@ export const Image: React.FC<ImageProps> = ({
         />
       )}
 
-      {/* Error state */}
+      {/* Error state - show default image if available, otherwise show error icon */}
       {hasError && (
-        <div
-          className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400"
-          style={{
-            backgroundColor: "#f3f4f6",
-            color: "#9ca3af",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <polyline points="21 15 16 10 5 21" />
-          </svg>
-        </div>
+        <>
+          {defaultImage ? (
+            <img
+              src={defaultImage}
+              alt={alt}
+              style={imageStyle}
+              className={clsx(
+                "transition-opacity duration-300 opacity-100",
+                fill && "absolute inset-0"
+              )}
+            />
+          ) : (
+            <div
+              className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400"
+              style={{
+                backgroundColor: "#f3f4f6",
+                color: "#9ca3af",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
