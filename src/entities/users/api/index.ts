@@ -1,3 +1,7 @@
 // User Management queries and hooks
-export { userManagementQueries } from "./user.query";
-export { signIn } from "./userSignin";
+export {
+  useSearchUserClubs,
+  useSearchUserHistory,
+  useGetUserProfile,
+} from "./users.query";
+export { signIn } from "./user.authentication";

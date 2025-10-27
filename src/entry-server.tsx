@@ -30,7 +30,7 @@ export async function render(url: string, options: RenderOptions = {}) {
   // Render the app to string
   const html = renderToString(
     <StrictMode>
-      <StaticRouter location={url}>
+      <StaticRouter location={url} future={{ v7_relativeSplatPath: true }}>
         <App queryClient={queryClient} />
       </StaticRouter>
     </StrictMode>

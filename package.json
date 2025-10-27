@@ -13,6 +13,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.9.2",
     "@tailwindcss/vite": "^4.1.15",
     "@tanstack/react-query": "^5.90.5",
     "axios": "^1.12.2",
@@ -25,6 +26,7 @@
     "qs": "^6.14.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-redux": "^9.2.0",
     "react-router-dom": "^6.20.0",
     "sirv": "^3.0.0"
   },

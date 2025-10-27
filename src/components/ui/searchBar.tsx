@@ -29,7 +29,8 @@ export default function SearchBar({
   // Call onSearch when debounced query changes
   useEffect(() => {
     onSearch(debouncedQuery);
-  }, [debouncedQuery, onSearch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery]);
 
   const handleClear = useCallback(() => {
     setQuery("");

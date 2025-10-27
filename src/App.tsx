@@ -1,13 +1,15 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import { Provider } from "react-redux";
 import { queryClient as defaultQueryClient } from "./shared/lib/react-query";
+import { store } from "./shared/store";
 import { useAuthCallback } from "./hooks";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Navigation from "./components/navigation/Navigation";
-import Home from "./pages/user/home/Home";
+import { Home, SearchClubs, Clubs, ClubsMembers } from "./pages/user";
 import NotFound from "./pages/not-found/NotFound";
 import Signin from "./pages/signin";
-import SearchClubs from "./pages/search-club";
+import { Profile } from "./pages/shared";
 
 interface AppProps {
   queryClient?: QueryClient;
@@ -37,10 +39,34 @@ function AppContent() {
           }
         />
         <Route
+          path="profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/search-clubs"
           element={
             <ProtectedRoute>
               <SearchClubs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/clubs/:id"
+          element={
+            <ProtectedRoute>
+              <Clubs />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/clubs/:id/members"
+          element={
+            <ProtectedRoute>
+              <ClubsMembers />
             </ProtectedRoute>
           }
         />
@@ -54,10 +80,12 @@ export default function App({
   queryClient = defaultQueryClient,
 }: AppProps = {}) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <div className="mx-auto min-h-screen max-w-screen-sm">
-        <AppContent />
-      </div>
-    </QueryClientProvider>
+    <Provider store={store}>
+      <QueryClientProvider client={queryClient}>
+        <div className="mx-auto min-h-screen max-w-screen-sm">
+          <AppContent />
+        </div>
+      </QueryClientProvider>
+    </Provider>
   );
 }
