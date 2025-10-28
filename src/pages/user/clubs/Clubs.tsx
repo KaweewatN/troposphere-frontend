@@ -24,7 +24,7 @@ export default function Clubs() {
 
   const clubDetails = clubDetailsResponse?.data;
   const totalMembers = clubDetailsResponse?.data?.total_members || 0;
-  const clubItems = clubItemsResponse || [];
+  const clubItems = clubItemsResponse?.data || [];
 
   const isLoading = isLoadingDetails || isLoadingItems;
   const hasError = detailsError || itemsError;

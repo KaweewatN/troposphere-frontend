@@ -43,5 +43,5 @@ export interface ItemSearchInClubApproval {
 
 // Response
 export type ItemSearchResponse = ApiResponse<ItemSearch[]>;
-export type ItemSearchInClubResponse = ItemSearchInClub[];
+export type ItemSearchInClubResponse = ApiResponse<ItemSearchInClub[]>;
 export type ItemSearchInClubApprovalResponse = ItemSearchInClubApproval[];

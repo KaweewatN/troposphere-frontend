@@ -3,6 +3,7 @@ import {
   useSearchUserClubs,
   useSearchUserHistory,
 } from "../../../entities/users";
+import { Image } from "../../../components/ui";
 import type { UserHistory } from "../../../entities/users/types";
 import { Card } from "../../../components/ui";
 import SearchBar from "../../../components/ui/searchBar";
@@ -57,17 +58,28 @@ export default function Home() {
             {userHistory.map((item: UserHistory) => (
               <div
                 key={item.transaction_id}
-                className="bg-theme-secondary rounded-2xl p-4"
+                className="bg-theme-secondary rounded-2xl px-4 py-2 flex items-center justify-start gap-x-7"
               >
-                <h3 className="font-semibold text-theme-heading mb-2">
-                  {item.item_name}
-                </h3>
-                <p className="text-sm text-theme-description">
-                  Issued date: {formatDate(item.borrow_date)}
-                </p>
-                <p className="text-sm text-theme-description">
-                  Return date: {formatDate(item.return_date)}
-                </p>
+                <div>
+                  <Image
+                    src={item.item_name || ""}
+                    alt={item.item_name}
+                    className="object-cover rounded-md"
+                    width={100}
+                    height={100}
+                  />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-theme-heading mb-2">
+                    {item.item_name}
+                  </h3>
+                  <p className="text-sm text-theme-description">
+                    Issued date: {formatDate(item.borrow_date)}
+                  </p>
+                  <p className="text-sm text-theme-description">
+                    Return date: {formatDate(item.return_date)}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
