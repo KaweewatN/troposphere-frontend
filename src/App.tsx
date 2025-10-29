@@ -6,7 +6,14 @@ import { store } from "./shared/store";
 import { useAuthCallback } from "./hooks";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Navigation from "./components/navigation/Navigation";
-import { Home, SearchClubs, Clubs, ClubsMembers } from "./pages/user";
+import {
+  Home,
+  SearchClubs,
+  Clubs,
+  ClubsMembers,
+  ItemDetail,
+  History,
+} from "./pages/user";
 import NotFound from "./pages/not-found/NotFound";
 import Signin from "./pages/signin";
 import { Profile } from "./pages/shared";
@@ -67,6 +74,22 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <ClubsMembers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/items/:id/"
+          element={
+            <ProtectedRoute>
+              <ItemDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/history"
+          element={
+            <ProtectedRoute>
+              <History />
             </ProtectedRoute>
           }
         />

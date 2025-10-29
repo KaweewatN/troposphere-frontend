@@ -188,8 +188,9 @@ export default function Clubs() {
         ) : clubItems.length > 0 ? (
           <div className="grid grid-cols-2 gap-x-2 gap-y-3">
             {clubItems.map((item) => (
-              <div
+              <Link
                 key={item.id}
+                to={`/items/${item.id}`}
                 className="bg-white rounded-xl border border-theme-primary-border overflow-hidden hover:shadow-lg transition-shadow"
               >
                 {/* Item Image */}
@@ -284,7 +285,7 @@ export default function Clubs() {
                     </div>
                   )}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         ) : (

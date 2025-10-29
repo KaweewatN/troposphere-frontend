@@ -14,7 +14,7 @@ export interface UserHistory {
   return_date: string;
 }
 
-export interface UserDetails {
+export interface UserProfile {
   name: string;
   email: string;
   picture?: string | null;
@@ -22,4 +22,4 @@ export interface UserDetails {
 
 export type UserClubsResponse = ApiResponse<UserClubs[]>;
 export type UserHistoryResponse = ApiResponse<UserHistory[]>;
-export type UserDetailsResponse = ApiResponse<UserDetails>;
+export type UserProfileResponse = ApiResponse<UserProfile>;
