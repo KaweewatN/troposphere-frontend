@@ -242,6 +242,7 @@ export default function ItemDetail() {
 
           {/* Borrow Button */}
           <Button
+            onClick={() => navigate(`/items/${itemId}/confirm`)}
             className="flex-1 py-4 text-base font-semibold shadow-lg"
             disabled={itemData.status !== "AVAILABLE"}
           >

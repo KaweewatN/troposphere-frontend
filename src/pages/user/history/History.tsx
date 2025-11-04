@@ -23,6 +23,14 @@ export default function History() {
     });
   };
 
+  // Check if item has met the due date (return date has passed)
+  const hasMetDueDate = (returnDate: string) => {
+    const dueDate = new Date(returnDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to compare only dates
+    return dueDate <= today;
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-6 px-4 max-w-screen-lg">
@@ -67,9 +75,24 @@ export default function History() {
 
                 {/* Item Details */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-theme-heading text-lg mb-2">
-                    {item.item_name}
-                  </h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-bold text-theme-heading text-lg">
+                      {item.item_name}
+                    </h3>
+                    {hasMetDueDate(item.return_date) && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full flex-shrink-0 ml-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                        </svg>
+                        Waiting for approval
+                      </span>
+                    )}
+                  </div>
+                  {hasMetDueDate(item.return_date) && (
+                    <p className="text-sm text-yellow-600 font-medium mb-2">
+                      ⏳ This item is waiting for moderator approval to confirm return
+                    </p>
+                  )}
                   <p className="text-sm text-theme-description mb-1">
                     Date Borrowed: {formatDate(item.borrow_date)}
                   </p>
