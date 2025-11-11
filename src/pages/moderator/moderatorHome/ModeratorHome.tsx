@@ -1,0 +1,212 @@
+import { useNavigate } from "react-router-dom";
+import { useUserProfile } from "../../../hooks/useUserProfile";
+import WelcomeHeader from "./components/WelcomeHeader";
+import {
+  Package,
+  Users,
+  CheckCircle,
+  Building2,
+  UserPlus,
+  PackagePlus,
+  Settings,
+  Clock,
+  TrendingUp,
+} from "lucide-react";
+
+export default function ModeratorHome() {
+  const navigate = useNavigate();
+  const { memberships, isLoading } = useUserProfile();
+
+  const moderatorClub = memberships.find((m) => m.role === "MODERATOR");
+  const clubId = moderatorClub?.club_id;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-indigo-600 border-r-transparent"></div>
+          <p className="mt-4 text-slate-600 font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no moderator club, show message
+  if (!moderatorClub || !clubId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="bg-slate-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Building2 className="w-10 h-10 text-slate-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-3">
+            No Club Assigned
+          </h2>
+          <p className="text-slate-600 mb-6">
+            You don't have any club assigned as a moderator yet. Please contact
+            an administrator.
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
+          >
+            Go to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const quickActions = [
+    {
+      title: "Add Item",
+      description: "Add new items to your club",
+      icon: PackagePlus,
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-600",
+      hoverBg: "hover:bg-blue-100",
+      onClick: () => navigate(`/moderator/add-item/${clubId}`),
+    },
+    {
+      title: "Approve Items",
+      description: "Review and approve pending items",
+      icon: CheckCircle,
+      bgColor: "bg-green-50",
+      textColor: "text-green-600",
+      hoverBg: "hover:bg-green-100",
+      onClick: () => navigate("/moderator/approve-item"),
+    },
+    {
+      title: "Manage Members",
+      description: "Add or remove club members",
+      icon: UserPlus,
+      bgColor: "bg-purple-50",
+      textColor: "text-purple-600",
+      hoverBg: "hover:bg-purple-100",
+      onClick: () => navigate("/moderator/member-management"),
+    },
+    {
+      title: "Manage Club",
+      description: "View and manage club details",
+      icon: Settings,
+      bgColor: "bg-orange-50",
+      textColor: "text-orange-600",
+      hoverBg: "hover:bg-orange-100",
+      onClick: () => navigate(`/moderator/club-management/${clubId}`),
+    },
+  ];
+
+  const stats = [
+    {
+      title: "Active Items",
+      value: "—",
+      icon: Package,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
+    },
+    {
+      title: "Total Members",
+      value: "—",
+      icon: Users,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
+    },
+    {
+      title: "Pending Approvals",
+      value: "—",
+      icon: Clock,
+      color: "text-orange-600",
+      bgColor: "bg-orange-50",
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Section */}
+        <WelcomeHeader />
+
+        {/* Club Info Banner */}
+        <div className="mb-6 md:mb-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl md:rounded-2xl p-6 md:p-8 text-white shadow-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 md:gap-3 mb-3">
+                <Building2 className="w-6 h-6 md:w-8 md:h-8 flex-shrink-0" />
+                <h2 className="text-xl md:text-2xl font-bold">Your Club</h2>
+              </div>
+              <p className="text-indigo-100 text-base md:text-lg mb-1 md:mb-2">
+                Club ID: {clubId}
+              </p>
+              <p className="text-indigo-100 text-xs md:text-sm">
+                Joined:{" "}
+                {new Date(moderatorClub.joined_at).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+            </div>
+            {/* <button
+              onClick={() => navigate(`/moderator/club-management/${clubId}`)}
+              className="bg-white text-indigo-600 px-4 py-2.5 md:px-6 md:py-3 rounded-lg md:rounded-xl font-semibold hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2 text-sm md:text-base flex-shrink-0"
+            >
+              <Settings className="w-4 h-4" />
+              Manage Club
+            </button> */}
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {stats.map((stat, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">
+                    {stat.title}
+                  </p>
+                  <p className="text-3xl font-bold text-slate-900 mt-2">
+                    {stat.value}
+                  </p>
+                </div>
+                <div className={`${stat.bgColor} p-3 rounded-xl`}>
+                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-slate-900">Quick Actions</h2>
+            <TrendingUp className="w-5 h-5 text-slate-400" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {quickActions.map((action, index) => (
+              <button
+                key={index}
+                onClick={action.onClick}
+                className={`bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:scale-105 transition-all duration-200 text-left group ${action.hoverBg}`}
+              >
+                <div
+                  className={`${action.bgColor} w-14 h-14 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
+                >
+                  <action.icon className={`w-7 h-7 ${action.textColor}`} />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  {action.title}
+                </h3>
+                <p className="text-sm text-slate-600">{action.description}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

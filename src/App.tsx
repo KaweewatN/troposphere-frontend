@@ -1,11 +1,10 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { Provider } from "react-redux";
 import { queryClient as defaultQueryClient } from "./shared/lib/react-query";
 import { store } from "./shared/store";
 import { useAuthCallback } from "./hooks";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
-import Navigation from "./components/navigation/Navigation";
+import { ProtectedRoute, ModeratorRoute } from "./components/auth";
 import {
   Home,
   SearchClubs,
@@ -15,6 +14,15 @@ import {
   History,
 } from "./pages/user";
 import NotFound from "./pages/not-found/NotFound";
+import {
+  ClubManagement,
+  AddItem,
+  ApproveItem,
+  ModeratorHome,
+  MemberManagement,
+  AddMemberToClub,
+  MyClubs,
+} from "./pages/moderator";
 import Signin from "./pages/signin";
 import { Profile } from "./pages/shared";
 
@@ -23,11 +31,6 @@ interface AppProps {
 }
 
 function AppContent() {
-  const location = useLocation();
-  const showNavigation =
-    location.pathname !== "/signin" &&
-    location.pathname !== "/auth/google/callback";
-
   // Handle OAuth callback and token storage
   useAuthCallback();
 
@@ -93,8 +96,64 @@ function AppContent() {
             </ProtectedRoute>
           }
         />
+        {/* Moderator Routes */}
+        <Route
+          path="/moderator/myclubs"
+          element={
+            <ModeratorRoute>
+              <MyClubs />
+            </ModeratorRoute>
+          }
+        />
+        <Route
+          path="/moderator/:id/club-management"
+          element={
+            <ModeratorRoute>
+              <ClubManagement />
+            </ModeratorRoute>
+          }
+        />
+        <Route
+          path="/moderator/:id/add-item"
+          element={
+            <ModeratorRoute>
+              <AddItem />
+            </ModeratorRoute>
+          }
+        />
+        <Route
+          path="/moderator/:id/approve-item"
+          element={
+            <ModeratorRoute>
+              <ApproveItem />
+            </ModeratorRoute>
+          }
+        />
+        <Route
+          path="/moderator/:id/member-management"
+          element={
+            <ModeratorRoute>
+              <MemberManagement />
+            </ModeratorRoute>
+          }
+        />
+        <Route
+          path="/moderator/:id/member-management/add-member"
+          element={
+            <ModeratorRoute>
+              <AddMemberToClub />
+            </ModeratorRoute>
+          }
+        />
+        <Route
+          path="/moderator/:id/home"
+          element={
+            <ModeratorRoute>
+              <ModeratorHome />
+            </ModeratorRoute>
+          }
+        />
       </Routes>
-      {showNavigation && <Navigation />}
     </>
   );
 }

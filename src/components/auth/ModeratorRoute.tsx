@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { isAuthenticated } from "../../shared/lib/auth";
 import { useEffect, useState } from "react";
-import { Navigation } from "../navigation";
+import { ModeratorNavigation } from "../navigation";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -48,7 +48,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   return (
     <div className="pt-7 px-5">
       {children}
-      {showNavigation && <Navigation />}
+      {showNavigation && <ModeratorNavigation />}
     </div>
   );
 }

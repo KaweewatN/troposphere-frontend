@@ -1,10 +1,21 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 
+interface UserMembership {
+  user_id: number;
+  club_id: number;
+  role: string;
+  joined_at: string;
+}
+
 interface UserProfile {
-  name: string;
+  id: number;
   email: string;
+  name: string;
   picture?: string | null;
+  global_role: number;
+  memberships: UserMembership[];
+  created_at: string;
 }
 
 interface UserState {

@@ -14,12 +14,31 @@ export interface UserHistory {
   return_date: string;
 }
 
-export interface UserProfile {
-  name: string;
+export interface UserMembership {
+  user_id: number;
+  club_id: number;
+  role: string;
+  joined_at: string;
+}
+
+export interface UserProfileResponse {
+  id: number;
   email: string;
+  name: string;
+  picture?: string | null;
+  global_role: number;
+  memberships: UserMembership[];
+  created_at: string;
+}
+
+export interface UserByStudentId {
+  id: number;
+  email: string;
+  name: string;
+  student_id: string;
   picture?: string | null;
 }
 
 export type UserClubsResponse = ApiResponse<UserClubs[]>;
 export type UserHistoryResponse = ApiResponse<UserHistory[]>;
-export type UserProfileResponse = ApiResponse<UserProfile>;
+export type UserByStudentIdResponse = UserByStudentId;

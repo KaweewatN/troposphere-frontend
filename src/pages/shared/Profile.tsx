@@ -1,13 +1,19 @@
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { clearUserProfile } from "../../shared/store/slices/userSlice";
 import { signOut } from "../../entities/users/api/user.authentication";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { Avatar, Badge } from "../../components/ui";
-import { LogOut, Mail, User, Shield } from "lucide-react";
+import { LogOut, Mail, User, Users, Calendar, ArrowRight } from "lucide-react";
 
 export function Profile() {
   const dispatch = useDispatch();
-  const { name, email, picture, isLoading } = useUserProfile();
+  const navigate = useNavigate();
+  const { name, email, picture, memberships, created_at, isLoading } =
+    useUserProfile();
+
+  const hasModerator = memberships.some((m) => m.role === "MODERATOR");
+  const clubId = memberships.find((m) => m.role === "MODERATOR")?.club_id ?? "";
 
   if (isLoading) {
     return (
@@ -70,20 +76,22 @@ export function Profile() {
                 </div>
               </div>
 
-              {/* Role Card */}
+              {/* Account Created Card */}
               <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200 transition-all hover:shadow-md hover:border-slate-300">
-                <div className="flex-shrink-0 w-10 h-10 bg-theme-purple-light/20 rounded-lg flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-theme-purple-dark" />
+                <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-purple-600" />
                 </div>
                 <div className="flex-1">
                   <p className="text-xs font-semibold text-theme-description uppercase tracking-wide">
-                    Account Role
+                    Member Since
                   </p>
-                  <div className="mt-1">
-                    <Badge variant="blue" className="font-semibold">
-                      User
-                    </Badge>
-                  </div>
+                  <p className="mt-1 text-slate-900 font-medium text-sm">
+                    {new Date(created_at).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
                 </div>
               </div>
 
@@ -104,11 +112,64 @@ export function Profile() {
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Memberships Section */}
+            {memberships.length > 0 && (
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 mt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Users className="w-5 h-5 text-indigo-600" />
+                  <p className="text-xs font-semibold text-theme-description uppercase tracking-wide">
+                    Club Memberships ({memberships.length})
+                  </p>
+                </div>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {memberships.map((membership) => (
+                    <div
+                      key={membership.club_id}
+                      className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200"
+                    >
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-slate-900">
+                          Club ID: {membership.club_id}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Joined:{" "}
+                          {new Date(membership.joined_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            membership.role === "MODERATOR" ? "purple" : "blue"
+                          }
+                          className="font-semibold"
+                        >
+                          {membership.role}
+                        </Badge>
+                        {membership.role === "MODERATOR" && (
+                          <button
+                            onClick={() =>
+                              navigate(`/moderator/${clubId}/home`)
+                            }
+                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                            title="Switch to Moderator View"
+                          >
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sign Out Button */}
             <div className="mt-8 flex gap-3">
               <button
                 onClick={handleLogout}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-red-600 text-red-600 rounded-xl font-semibold transition-all hover:bg-red-600 hover:text-white shadow-sm hover:shadow-md cursor-pointer"
+                className={`${
+                  hasModerator ? "flex-1" : "flex-1"
+                } flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-red-600 text-red-600 rounded-xl font-semibold transition-all hover:bg-red-600 hover:text-white shadow-sm hover:shadow-md cursor-pointer`}
               >
                 <LogOut className="w-4 h-4" />
                 Sign out

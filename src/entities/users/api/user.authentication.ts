@@ -6,8 +6,7 @@ export function signIn(): void {
 
 export function signOut(): void {
   // Clear tokens from local storage
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("auth_token");
   // Redirect to sign-in page
   window.location.href = "/signin";
 }
