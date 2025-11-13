@@ -28,9 +28,10 @@ interface NavItemProps {
   to: string;
   icon: React.ReactNode;
   label: string;
+  state?: Record<string, unknown>;
 }
 
-function NavItem({ to, icon, label }: NavItemProps) {
+function NavItem({ to, icon, label, state }: NavItemProps) {
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -41,7 +42,11 @@ function NavItem({ to, icon, label }: NavItemProps) {
 
   return (
     <li>
-      <NavLink to={to} className={navItemVariants({ active: isActive })}>
+      <NavLink
+        to={to}
+        state={state}
+        className={navItemVariants({ active: isActive })}
+      >
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </NavLink>
@@ -88,7 +93,11 @@ export default function ModeratorNavigation() {
           icon={<CheckCircle2 />}
           label="Approve"
         />
-        <NavItem to="/profile" icon={<CircleUserRound />} label="Profile" />
+        <NavItem
+          to="/moderator/profile"
+          icon={<CircleUserRound />}
+          label="Profile"
+        />
       </ul>
     </nav>
   );

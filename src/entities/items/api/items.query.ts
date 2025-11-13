@@ -26,6 +26,8 @@ export function useSearchItems(query: string = "", clubId: number) {
   });
 }
 
+/** Get item details by item ID
+ * GET /items/{item_id} */
 export function useSearchItemId(itemId: number) {
   return useQuery({
     queryKey: ["items", itemId],

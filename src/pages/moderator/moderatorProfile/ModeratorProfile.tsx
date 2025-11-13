@@ -1,13 +1,13 @@
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { clearUserProfile } from "../../shared/store/slices/userSlice";
-import { signOut } from "../../entities/users/api/user.authentication";
-import { useUserProfile } from "../../hooks/useUserProfile";
-import { Avatar, Badge } from "../../components/ui";
+import { clearUserProfile } from "../../../shared/store/slices/userSlice";
+import { signOut } from "../../../entities/users/api/user.authentication";
+import { useUserProfile } from "../../../hooks/useUserProfile";
+import { Avatar, Badge } from "../../../components/ui";
 import { LogOut, Mail, User, Users, Calendar, ArrowRight } from "lucide-react";
-import { Navigation } from "../../components/navigation";
+import { ModeratorNavigation } from "../../../components/navigation";
 
-export function Profile() {
+export function ModeratorProfile() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { name, email, picture, memberships, created_at, isLoading } =
@@ -163,11 +163,18 @@ export function Profile() {
               </div>
             )}
 
-            {/* Sign Out Button */}
+            {/* Action Buttons */}
             <div className="mt-8 flex gap-3">
               <button
+                onClick={() => navigate("/profile")}
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-blue-600 text-blue-600 rounded-xl font-semibold transition-all hover:bg-blue-600 hover:text-white shadow-sm hover:shadow-md cursor-pointer"
+              >
+                <ArrowRight className="w-4 h-4 rotate-180" />
+                Member Profile
+              </button>
+              <button
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-red-600 text-red-600 rounded-xl font-semibold transition-all hover:bg-red-600 hover:text-white shadow-sm hover:shadow-md cursor-pointer"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-red-600 text-red-600 rounded-xl font-semibold transition-all hover:bg-red-600 hover:text-white shadow-sm hover:shadow-md cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 Sign out
@@ -190,8 +197,8 @@ export function Profile() {
         </div>
       </div>
 
-      {/* Always show regular Navigation */}
-      <Navigation />
+      {/* Always show ModeratorNavigation */}
+      <ModeratorNavigation />
     </div>
   );
 }

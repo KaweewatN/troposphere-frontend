@@ -1,6 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { Provider } from "react-redux";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { queryClient as defaultQueryClient } from "./shared/lib/react-query";
 import { store } from "./shared/store";
 import { useAuthCallback } from "./hooks";
@@ -22,6 +24,8 @@ import {
   MemberManagement,
   AddMemberToClub,
   MyClubs,
+  AddNewItem,
+  ModeratorProfile,
 } from "./pages/moderator";
 import Signin from "./pages/signin";
 import { Profile } from "./pages/shared";
@@ -122,6 +126,14 @@ function AppContent() {
           }
         />
         <Route
+          path="/moderator/add-item/:id"
+          element={
+            <ModeratorRoute>
+              <AddNewItem />
+            </ModeratorRoute>
+          }
+        />
+        <Route
           path="/moderator/:id/approve-item"
           element={
             <ModeratorRoute>
@@ -153,6 +165,14 @@ function AppContent() {
             </ModeratorRoute>
           }
         />
+        <Route
+          path="/moderator/profile"
+          element={
+            <ModeratorRoute>
+              <ModeratorProfile />
+            </ModeratorRoute>
+          }
+        />
       </Routes>
     </>
   );
@@ -166,6 +186,7 @@ export default function App({
       <QueryClientProvider client={queryClient}>
         <div className="mx-auto min-h-screen max-w-screen-sm">
           <AppContent />
+          <ToastContainer />
         </div>
       </QueryClientProvider>
     </Provider>

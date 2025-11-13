@@ -23,7 +23,7 @@ export default function AddMemberToClub() {
   const clubId = parseInt(id || "0", 10);
 
   const [searchedStudentId, setSearchedStudentId] = useState<string>("");
-  const [selectedRole, setSelectedRole] = useState<number>(3); // Default role (Member)
+  const [selectedRole, setSelectedRole] = useState<number>(1); // Default role (Member = 1)
 
   const {
     register,
@@ -50,7 +50,7 @@ export default function AddMemberToClub() {
 
   const handleCancel = () => {
     setSearchedStudentId("");
-    setSelectedRole(3);
+    setSelectedRole(1);
   };
 
   const handleAddMember = () => {
@@ -159,9 +159,9 @@ export default function AddMemberToClub() {
                   {/* Member Option */}
                   <button
                     type="button"
-                    onClick={() => setSelectedRole(3)}
+                    onClick={() => setSelectedRole(1)}
                     className={`p-4 rounded-lg border-2 transition-all ${
-                      selectedRole === 3
+                      selectedRole === 1
                         ? "border-theme-purple bg-purple-50"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
@@ -169,7 +169,7 @@ export default function AddMemberToClub() {
                     <div className="flex flex-col items-center gap-2">
                       <Users
                         className={`h-8 w-8 ${
-                          selectedRole === 3
+                          selectedRole === 1
                             ? "text-theme-purple"
                             : "text-gray-400"
                         }`}
@@ -177,7 +177,7 @@ export default function AddMemberToClub() {
                       <div className="text-center">
                         <p
                           className={`font-semibold ${
-                            selectedRole === 3
+                            selectedRole === 1
                               ? "text-theme-purple"
                               : "text-gray-700"
                           }`}
@@ -188,7 +188,7 @@ export default function AddMemberToClub() {
                           Can borrow items
                         </p>
                       </div>
-                      {selectedRole === 3 && (
+                      {selectedRole === 1 && (
                         <div className="w-full h-1 bg-theme-purple rounded-full mt-2" />
                       )}
                     </div>

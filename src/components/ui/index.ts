@@ -8,3 +8,11 @@ export type { BadgeProps } from "./badge";
 export type { AvatarProps } from "./avatar";
 export { default as BackButton } from "./backButton";
 export { WelcomeHeader } from "./WelcomeHeader";
+export { default as Modal } from "./modal";
+export {
+  showSuccess,
+  showError,
+  showWarning,
+  showInfo,
+  showToast,
+} from "./toast";

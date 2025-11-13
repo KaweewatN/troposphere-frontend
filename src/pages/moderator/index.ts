@@ -5,3 +5,5 @@ export { default as MemberManagement } from "./memberManagement/MemberManagement
 export { default as AddMemberToClub } from "./memberManagement/addMember/AddMemberToClub";
 export { default as ApproveItem } from "./approveItem/ApproveItem";
 export { default as MyClubs } from "./myclubs/MyClubs";
+export { default as AddNewItem } from "./clubManagement/addNewItem/AddNewItem";
+export { ModeratorProfile } from "./moderatorProfile";

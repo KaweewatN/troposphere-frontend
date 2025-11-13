@@ -1,7 +1,12 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useSearchClubDetails } from "../../../entities/clubs";
-import { useSearchItemsInClub } from "../../../entities/items";
-import { Image, Badge, Button } from "../../../components/ui";
+import {
+  useSearchItemsInClub,
+  useDeleteItem,
+  useDeleteItemImages,
+} from "../../../entities/items";
+import { Image, Badge, Button, Modal } from "../../../components/ui";
+import { showSuccess, showError } from "../../../components/ui/toast";
 import {
   Check,
   TriangleAlert,
@@ -12,11 +17,18 @@ import {
 } from "lucide-react";
 import { BackButton } from "../../../components/ui";
 import { AxiosError } from "axios";
+import { useState } from "react";
 
 export default function ClubManagement() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const clubId = parseInt(id || "0", 10);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
   const {
     data: clubDetailsResponse,
@@ -28,11 +40,69 @@ export default function ClubManagement() {
     data: clubItemsResponse,
     isLoading: isLoadingItems,
     error: itemsError,
+    refetch: refetchItems,
   } = useSearchItemsInClub(clubId);
 
   const clubDetails = clubDetailsResponse?.data;
   const totalMembers = clubDetailsResponse?.data?.total_members || 0;
   const clubItems = clubItemsResponse?.data || [];
+
+  // Delete mutations
+  const { mutate: deleteItem, isPending: isDeletingItem } = useDeleteItem({
+    onSuccess: () => {
+      deleteItemImages({ itemId: itemToDelete?.id.toString() || "" });
+    },
+    onError: (error) => {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "detail" in error
+          ? error.detail[0]?.msg || "Failed to delete item"
+          : "Failed to delete item";
+      showError(`Failed to delete item: ${errorMessage}`);
+      setIsDeleteModalOpen(false);
+      setItemToDelete(null);
+    },
+  });
+
+  const { mutate: deleteItemImages, isPending: isDeletingImages } =
+    useDeleteItemImages({
+      onSuccess: () => {
+        showSuccess(`Item "${itemToDelete?.name}" deleted successfully!`);
+        setIsDeleteModalOpen(false);
+        setItemToDelete(null);
+        refetchItems();
+      },
+      onError: (error) => {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "detail" in error
+            ? error.detail[0]?.msg || "Failed to delete item images"
+            : "Failed to delete item images";
+        showError(`Failed to delete images: ${errorMessage}`);
+        setIsDeleteModalOpen(false);
+        setItemToDelete(null);
+      },
+    });
+
+  const handleDeleteClick = (itemId: number, itemName: string) => {
+    setItemToDelete({ id: itemId, name: itemName });
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (itemToDelete) {
+      deleteItem({ itemId: itemToDelete.id.toString() });
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setItemToDelete(null);
+  };
+
+  const isDeleting = isDeletingItem || isDeletingImages;
 
   const isLoading = isLoadingDetails || isLoadingItems;
   const hasError = detailsError || itemsError;
@@ -300,14 +370,7 @@ export default function ClubManagement() {
                     <button
                       onClick={(e) => {
                         e.preventDefault();
-                        if (
-                          window.confirm(
-                            `Are you sure you want to delete "${item.name}"?`
-                          )
-                        ) {
-                          // TODO: Implement delete functionality
-                          console.log("Delete item:", item.id);
-                        }
+                        handleDeleteClick(item.id, item.name);
                       }}
                       className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors text-sm font-medium"
                     >
@@ -325,6 +388,54 @@ export default function ClubManagement() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCancelDelete}
+        title="Delete Item"
+        icon={<Trash2 className="h-5 w-5 text-red-600" />}
+        titleColor="text-red-600"
+        maxWidth="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Are you sure you want to delete{" "}
+            <span className="font-semibold">"{itemToDelete?.name}"</span>?
+          </p>
+          <p className="text-sm text-gray-600">
+            This action will delete the item and all its associated images. This
+            cannot be undone.
+          </p>
+
+          <div className="flex gap-3 justify-end mt-6">
+            <button
+              onClick={handleCancelDelete}
+              disabled={isDeleting}
+              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isDeleting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
