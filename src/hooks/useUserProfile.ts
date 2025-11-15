@@ -25,17 +25,21 @@ export function useUserProfile() {
 
   // Store profile in Redux when fetched
   useEffect(() => {
-    if (profileResponse?.data && !isLoaded) {
-      dispatch(setUserProfile(profileResponse.data));
+    if (profileResponse && !isLoaded) {
+      dispatch(setUserProfile(profileResponse));
     }
   }, [profileResponse, isLoaded, dispatch]);
 
   return {
-    profile: profile || profileResponse?.data || null,
+    profile: profile || profileResponse || null,
     isLoading: !isLoaded && isLoading,
     error,
-    name: profile?.name || profileResponse?.data?.name || "",
-    email: profile?.email || profileResponse?.data?.email || "",
-    picture: profile?.picture || profileResponse?.data?.picture || null,
+    id: profile?.id || profileResponse?.id || 0,
+    name: profile?.name || profileResponse?.name || "",
+    email: profile?.email || profileResponse?.email || "",
+    picture: profile?.picture || profileResponse?.picture || null,
+    global_role: profile?.global_role || profileResponse?.global_role || 0,
+    memberships: profile?.memberships || profileResponse?.memberships || [],
+    created_at: profile?.created_at || profileResponse?.created_at || "",
   };
 }

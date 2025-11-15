@@ -4,6 +4,7 @@ import type {
   UserClubsResponse,
   UserHistoryResponse,
   UserProfileResponse,
+  UserByStudentIdResponse,
 } from "../types";
 
 /**
@@ -52,5 +53,18 @@ export function useGetUserProfile(options?: { enabled?: boolean }) {
     retry: 1,
     throwOnError: false,
     enabled: options?.enabled !== false,
+  });
+}
+
+export function useGetUserByStudentId(studentId: string) {
+  return useQuery({
+    queryKey: ["user", "studentId", studentId],
+    queryFn: () =>
+      createQueryFn<UserByStudentIdResponse>({
+        path: `/users/search?q=${studentId}`,
+      }),
+    retry: 1,
+    throwOnError: false,
+    enabled: !!studentId,
   });
 }

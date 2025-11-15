@@ -1,4 +1,4 @@
-type ClubStatus = "AVAILABLE" | "UNAVAILABLE";
+type ItemStatus = "AVAILABLE" | "BORROWED" | "UNAVAILABLE";
 
 // Request payloads
 export interface CreateClubRequest {
@@ -10,7 +10,7 @@ export interface AddItemToClubRequest {
   name: string;
   description: string;
   is_high_risk: boolean;
-  status: ClubStatus;
+  status: ItemStatus;
   qr_code: string;
 }
 
@@ -35,7 +35,7 @@ export interface AddItemToClubResponse {
   name: string;
   description: string;
   is_high_risk: boolean;
-  status: ClubStatus;
+  status: ItemStatus;
   qr_code: string;
   id: number;
   created_at: string;
