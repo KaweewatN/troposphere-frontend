@@ -13,9 +13,9 @@ import {
   ArrowRight,
   ArrowLeft,
 } from "lucide-react";
-import { ModeratorNavigation } from "../../../components/navigation";
+import AdminNavigation from "../../../components/navigation/AdminNavigation";
 
-export function ModeratorProfile() {
+export function AdminProfile() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { name, email, picture, memberships, created_at, isLoading } =
@@ -43,7 +43,7 @@ export function ModeratorProfile() {
         {/* Profile Card */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Header Background */}
-          <div className="h-32 bg-gradient-to-r from-indigo-300 via-70% to-purple-300"></div>
+          <div className="h-32 bg-gradient-to-r from-yellow-200 via-70% to-orange-300"></div>
 
           {/* Profile Content */}
           <div className="px-8 pb-8">
@@ -141,24 +141,24 @@ export function ModeratorProfile() {
                           <ArrowRight className="w-4 h-4" />
                         </button>
                       );
-                    } else if (membership.role === "ADMIN") {
+                    } else if (membership.role === "MODERATOR") {
                       switchButton = (
                         <button
-                          onClick={() => navigate("/admin/profile")}
-                          className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors cursor-pointer"
-                          title="Go to Admin Profile"
+                          onClick={() => navigate("/moderator/profile")}
+                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
+                          title="Go to Moderator Profile"
                         >
                           <ArrowRight className="w-4 h-4" />
                         </button>
                       );
-                    } else if (membership.role === "MODERATOR") {
+                    } else if (membership.role === "ADMIN") {
                       switchButton = (
                         <button
                           onClick={() =>
-                            navigate(`/moderator/${membership.club_id}/home`)
+                            navigate(`/admin/${membership.club_id}/home`)
                           }
-                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
-                          title="Switch to this Moderator Club"
+                          className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors cursor-pointer"
+                          title="Switch to this Admin Club"
                         >
                           <ArrowRight className="w-4 h-4" />
                         </button>
@@ -205,6 +205,8 @@ export function ModeratorProfile() {
 
             {/* Action Buttons */}
             <div className="mt-8 space-y-3">
+              {/* Switch to Moderator Profile if user has any moderator role */}
+
               <div className="flex gap-3">
                 <button
                   onClick={() => {
@@ -241,8 +243,8 @@ export function ModeratorProfile() {
         </div>
       </div>
 
-      {/* Always show ModeratorNavigation */}
-      <ModeratorNavigation />
+      {/* Always show AdminNavigation */}
+      <AdminNavigation />
     </div>
   );
 }

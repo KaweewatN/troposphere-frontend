@@ -32,7 +32,10 @@ export default function AddNewItem() {
       onSuccess: (response: { name: string; id: number }) => {
         showSuccess(`Item "${response.name}" added successfully!`);
         reset();
-        navigate(`/moderator/${clubId}/club-management`);
+        setTimeout(() => {
+          navigate("/admin/myclubs");
+          window.location.reload();
+        }, 500);
       },
       onError: (error: Error | { detail: Array<{ msg: string }> }) => {
         const errorMessage =
@@ -53,10 +56,7 @@ export default function AddNewItem() {
           <h2 className="text-xl font-semibold text-red-600">
             Invalid Club ID
           </h2>
-          <Button
-            onClick={() => navigate("/moderator/myclubs")}
-            className="mt-4"
-          >
+          <Button onClick={() => navigate("/admin/myclubs")} className="mt-4">
             Back to My Clubs
           </Button>
         </div>
@@ -229,7 +229,7 @@ export default function AddNewItem() {
         <div className="flex gap-3 pt-4">
           <button
             type="button"
-            onClick={() => navigate(`/moderator/${clubId}/club-management`)}
+            onClick={() => navigate(`/admin/${clubId}/club-management`)}
             disabled={isLoading}
             className="flex-1 px-6 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           >

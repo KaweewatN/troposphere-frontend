@@ -1,14 +1,21 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useSearchClubDetails } from "../../../entities/clubs";
 import { useSearchItemsInClub } from "../../../entities/items";
+import type { ItemSearchInClub } from "../../../entities/items/types/items.query.types";
 import { Image, Badge, Button } from "../../../components/ui";
+import SearchBar from "../../../components/ui/searchBar";
 import { Check, TriangleAlert, ShieldAlert } from "lucide-react";
 import { AxiosError } from "axios";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 export default function Clubs() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const clubId = parseInt(id || "0", 10);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [limit, setLimit] = useState(10);
+  const [allItems, setAllItems] = useState<ItemSearchInClub[]>([]);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   const {
     data: clubDetailsResponse,
@@ -20,11 +27,52 @@ export default function Clubs() {
     data: clubItemsResponse,
     isLoading: isLoadingItems,
     error: itemsError,
-  } = useSearchItemsInClub(clubId);
+    isFetching,
+  } = useSearchItemsInClub(clubId, 0, limit, searchQuery);
 
   const clubDetails = clubDetailsResponse?.data;
   const totalMembers = clubDetailsResponse?.data?.total_members || 0;
-  const clubItems = clubItemsResponse?.data || [];
+
+  // Update allItems when new data arrives
+  useEffect(() => {
+    const items = clubItemsResponse?.data || [];
+    setAllItems(items);
+  }, [clubItemsResponse?.data]);
+
+  // Reset limit when search query changes
+  useEffect(() => {
+    setLimit(10);
+  }, [searchQuery]);
+
+  // Infinite scroll observer
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [target] = entries;
+      if (target.isIntersecting && !isFetching && allItems.length >= limit) {
+        setLimit((prev) => prev + 10);
+      }
+    },
+    [isFetching, allItems.length, limit]
+  );
+
+  useEffect(() => {
+    const element = observerTarget.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleObserver, {
+      root: null,
+      rootMargin: "100px",
+      threshold: 0.1,
+    });
+
+    observer.observe(element);
+
+    return () => {
+      if (element) {
+        observer.unobserve(element);
+      }
+    };
+  }, [handleObserver]);
 
   const isLoading = isLoadingDetails || isLoadingItems;
   const hasError = detailsError || itemsError;
@@ -181,116 +229,146 @@ export default function Clubs() {
       <div className="mt-6">
         <h2 className="text-xl font-semibold text-black mb-4">Items</h2>
 
-        {isLoadingItems ? (
+        {/* Search Bar */}
+        <div className="mb-7">
+          <SearchBar
+            onSearch={setSearchQuery}
+            placeholder="Search items by name or description..."
+            debounceMs={500}
+          />
+        </div>
+
+        {(isLoadingItems || isFetching) && allItems.length === 0 ? (
           <div className="text-center py-8">
             <div className="inline-block w-6 h-6 border-4 border-theme-purple border-t-transparent rounded-full animate-spin" />
+            <p className="mt-2 text-sm text-neutral-600">
+              {searchQuery ? "Searching..." : "Loading items..."}
+            </p>
           </div>
-        ) : clubItems.length > 0 ? (
-          <div className="grid grid-cols-2 gap-x-2 gap-y-3">
-            {clubItems.map((item) => (
-              <Link
-                key={item.id}
-                to={`/items/${item.id}`}
-                className="bg-white rounded-xl border border-theme-primary-border overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                {/* Item Image */}
-                <div className="relative h-40 bg-gray-100">
-                  {item.images && item.images.length > 0 ? (
-                    <Image
-                      src={item.images[0]}
-                      alt={item.name}
-                      fill
-                      objectFit="cover"
-                      className="absolute inset-0"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-12 w-12 text-gray-300"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+        ) : allItems.length > 0 ? (
+          <>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-3">
+              {allItems.map((item) => (
+                <Link
+                  key={item.id}
+                  to={`/items/${item.id}`}
+                  className="bg-white rounded-xl border border-theme-primary-border overflow-hidden hover:shadow-lg transition-shadow"
+                >
+                  {/* Item Image */}
+                  <div className="relative h-40 bg-gray-100">
+                    {item.images && item.images.length > 0 ? (
+                      <Image
+                        src={item.images[0]}
+                        alt={item.name}
+                        fill
+                        objectFit="cover"
+                        className="absolute inset-0"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-12 w-12 text-gray-300"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          />
+                        </svg>
+                      </div>
+                    )}
+
+                    {/* Status Badge */}
+                    <div className="absolute top-2 right-2">
+                      <Badge
+                        variant={
+                          item.status === "AVAILABLE"
+                            ? "green"
+                            : item.status === "BORROWED"
+                            ? "yellow"
+                            : "gray"
+                        }
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                        />
-                      </svg>
-                    </div>
-                  )}
-
-                  {/* Status Badge */}
-                  <div className="absolute top-2 right-2">
-                    <Badge
-                      variant={
-                        item.status === "AVAILABLE"
-                          ? "green"
-                          : item.status === "BORROWED"
-                          ? "yellow"
-                          : "gray"
-                      }
-                    >
-                      {item.status === "AVAILABLE" && (
-                        <Check className="h-3 w-3" strokeWidth={3} />
-                      )}
-                      {item.status === "BORROWED" && (
-                        <TriangleAlert className="h-3 w-3" strokeWidth={3} />
-                      )}
-                    </Badge>
-                  </div>
-
-                  {/* High Risk Badge */}
-                  {item.is_high_risk && (
-                    <div className="absolute top-2 left-2">
-                      <Badge variant="red">
-                        <TriangleAlert className="h-3 w-3" strokeWidth={3} />
-                        High Risk
+                        {item.status === "AVAILABLE" && (
+                          <Check className="h-3 w-3" strokeWidth={3} />
+                        )}
+                        {item.status === "BORROWED" && (
+                          <TriangleAlert className="h-3 w-3" strokeWidth={3} />
+                        )}
                       </Badge>
                     </div>
-                  )}
-                </div>
 
-                {/* Item Info */}
-                <div className="p-4">
-                  <h3 className="font-semibold text-black text-base mb-2">
-                    {item.name}
-                  </h3>
-                  <p className="text-xs text-theme-description line-clamp-2">
-                    {item.description.length > 60
-                      ? item.description.substring(0, 60) + "..."
-                      : item.description}
+                    {/* High Risk Badge */}
+                    {item.is_high_risk && (
+                      <div className="absolute top-2 left-2">
+                        <Badge variant="red">
+                          <TriangleAlert className="h-3 w-3" strokeWidth={3} />
+                          High Risk
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Item Info */}
+                  <div className="p-4">
+                    <h3 className="font-semibold text-black text-base mb-2">
+                      {item.name}
+                    </h3>
+                    <p className="text-xs text-theme-description line-clamp-2">
+                      {item.description.length > 60
+                        ? item.description.substring(0, 60) + "..."
+                        : item.description}
+                    </p>
+
+                    {/* QR Code indicator */}
+                    {item.qr_code && (
+                      <div className="mt-3 flex items-center gap-2 text-xs text-theme-purple">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                          />
+                        </svg>
+                        <span>QR Code Available</span>
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Infinite scroll trigger and loading indicator */}
+            <div ref={observerTarget} className="py-4">
+              {isFetching && allItems.length > 0 && (
+                <div className="text-center">
+                  <div className="inline-block w-6 h-6 border-4 border-theme-purple border-t-transparent rounded-full animate-spin" />
+                  <p className="mt-2 text-sm text-neutral-600">
+                    Loading more items...
                   </p>
-
-                  {/* QR Code indicator */}
-                  {item.qr_code && (
-                    <div className="mt-3 flex items-center gap-2 text-xs text-theme-purple">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
-                        />
-                      </svg>
-                      <span>QR Code Available</span>
-                    </div>
-                  )}
                 </div>
-              </Link>
-            ))}
-          </div>
+              )}
+            </div>
+          </>
         ) : (
           <div className="text-center py-8 text-theme-description">
-            <p>No items found in this club.</p>
+            <p>
+              {searchQuery
+                ? "No items found matching your search."
+                : "No items found in this club."}
+            </p>
           </div>
         )}
       </div>

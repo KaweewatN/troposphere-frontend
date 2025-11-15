@@ -4,6 +4,7 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 interface UserMembership {
   user_id: number;
   club_id: number;
+  club_name: string;
   role: string;
   joined_at: string;
 }

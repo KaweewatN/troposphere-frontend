@@ -9,7 +9,14 @@ import type { ItemSearchInClub } from "../../../entities/items/types/items.query
 import { Image, Badge, Button, Modal } from "../../../components/ui";
 import SearchBar from "../../../components/ui/searchBar";
 import { showSuccess, showError } from "../../../components/ui/toast";
-import { Check, TriangleAlert, ShieldAlert, Edit, Trash2 } from "lucide-react";
+import {
+  Check,
+  TriangleAlert,
+  ShieldAlert,
+  Plus,
+  Edit,
+  Trash2,
+} from "lucide-react";
 import { BackButton } from "../../../components/ui";
 import { AxiosError } from "axios";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -279,6 +286,15 @@ export default function ClubManagement() {
       <div className="mt-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-black">Items</h2>
+          <Button
+            onClick={() =>
+              navigate(`/admin/${clubId}/club-management/add-item`)
+            }
+            className="flex items-center gap-2 bg-theme-purple hover:bg-theme-purple-dark text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Add Item
+          </Button>
         </div>
 
         {/* Search Bar */}

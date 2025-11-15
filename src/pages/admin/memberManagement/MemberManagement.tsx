@@ -3,6 +3,7 @@ import {
   useSearchClubDetails,
   useSearchClubMembers,
   useDeleteClubRole,
+  useAddMemberToClub,
 } from "../../../entities/clubs";
 import {
   Image,
@@ -13,7 +14,7 @@ import {
   showSuccess,
   showError,
 } from "../../../components/ui";
-import { Mail, User, Trash2, Plus } from "lucide-react";
+import { Mail, User, Trash2, Plus, Edit, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
 export default function MemberManagement() {
@@ -36,6 +37,17 @@ export default function MemberManagement() {
 
   const [deletingMemberId, setDeletingMemberId] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [editingMember, setEditingMember] = useState<{
+    userId: number;
+    name: string;
+    currentRole: number;
+  } | null>(null);
+  const [showEditPopup, setShowEditPopup] = useState(false);
+
+  const updateRoleMutation = useAddMemberToClub(
+    clubId,
+    editingMember?.userId.toString() || ""
+  );
 
   const deleteMemberMutation = useDeleteClubRole(String(clubId), {
     onSuccess: () => {
@@ -129,7 +141,7 @@ export default function MemberManagement() {
       <div className="mb-4 px-2 flex items-center justify-between">
         <BackButton />
         <Link
-          to={`/moderator/${clubId}/member-management/add-member`}
+          to={`/admin/${clubId}/member-management/add-member`}
           className="inline-flex items-center gap-1 px-4 py-2 rounded-3xl bg-theme-purple text-white hover:bg-theme-purple-dark transition-colors"
         >
           <Plus className="h-4 w-4" />
@@ -220,23 +232,33 @@ export default function MemberManagement() {
 
                   {/* Action Buttons */}
                   <div className="flex gap-2 flex-shrink-0">
+                    {/* Edit Button */}
+                    <button
+                      className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition-colors border border-blue-200"
+                      onClick={() => {
+                        const roleNum =
+                          typeof member.role === "string"
+                            ? parseInt(member.role)
+                            : member.role;
+                        setEditingMember({
+                          userId: member.user_id,
+                          name: member.name,
+                          currentRole: roleNum,
+                        });
+                        setShowEditPopup(true);
+                      }}
+                      aria-label="Edit member role"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+
                     {/* Delete Button */}
                     <button
-                      className={`p-2 rounded-lg transition-colors border ${
-                        Number(member.role) === 2 || Number(member.role) === 3
-                          ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                          : "hover:bg-red-50 text-red-600 border-red-200"
-                      }`}
+                      className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors border border-red-200"
                       onClick={() => {
-                        const roleNum = Number(member.role);
-                        if (roleNum !== 2 && roleNum !== 3) {
-                          setDeletingMemberId(member.user_id);
-                          setShowDeleteConfirm(true);
-                        }
+                        setDeletingMemberId(member.user_id);
+                        setShowDeleteConfirm(true);
                       }}
-                      disabled={
-                        Number(member.role) === 2 || Number(member.role) === 3
-                      }
                       aria-label="Delete member"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -303,6 +325,113 @@ export default function MemberManagement() {
           </button>
         </div>
       </Modal>
+
+      {/* Edit Role Popup */}
+      {editingMember && (
+        <Modal
+          isOpen={showEditPopup}
+          onClose={() => {
+            setShowEditPopup(false);
+            setEditingMember(null);
+          }}
+          title="Change Member Role"
+          icon={<ShieldCheck className="w-6 h-6" />}
+          titleColor="text-indigo-600"
+        >
+          <div className="mb-6">
+            <p className="text-slate-600 mb-4">
+              Change role for{" "}
+              <span className="font-semibold text-slate-900">
+                {editingMember.name}
+              </span>
+            </p>
+
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-600">
+                  Current Role:
+                </span>
+                <Badge
+                  variant={getRoleBadgeVariant(editingMember.currentRole)}
+                  className="font-semibold"
+                >
+                  {getRoleName(editingMember.currentRole)}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-600">
+                  New Role:
+                </span>
+                <Badge
+                  variant={getRoleBadgeVariant(
+                    editingMember.currentRole === 2 ? 1 : 2
+                  )}
+                  className="font-semibold"
+                >
+                  {getRoleName(editingMember.currentRole === 2 ? 1 : 2)}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => {
+                setShowEditPopup(false);
+                setEditingMember(null);
+              }}
+              className="px-4 py-2 border-2 border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                if (editingMember) {
+                  const newRole = editingMember.currentRole === 2 ? 1 : 2;
+                  const newRoleName = newRole === 1 ? "Member" : "Moderator";
+
+                  updateRoleMutation.mutate(
+                    { role: newRole },
+                    {
+                      onSuccess: () => {
+                        setShowEditPopup(false);
+                        setEditingMember(null);
+                        showSuccess(
+                          `Role changed to ${newRoleName} successfully!`
+                        );
+                        setTimeout(() => {
+                          window.location.reload();
+                        }, 1000);
+                      },
+                      onError: (error) => {
+                        showError(
+                          error instanceof Error
+                            ? error.message
+                            : "Failed to change role. Please try again."
+                        );
+                      },
+                    }
+                  );
+                }
+              }}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors flex items-center gap-2"
+              disabled={updateRoleMutation.isPending}
+            >
+              {updateRoleMutation.isPending ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Changing...
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="w-4 h-4" />
+                  Change Role
+                </>
+              )}
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

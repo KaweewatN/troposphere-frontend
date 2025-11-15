@@ -13,8 +13,6 @@ export function Profile() {
   const { name, email, picture, memberships, created_at, isLoading } =
     useUserProfile();
 
-  const clubId = memberships.find((m) => m.role === "MODERATOR")?.club_id ?? "";
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
@@ -37,7 +35,7 @@ export function Profile() {
         {/* Profile Card */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {/* Header Background */}
-          <div className="h-32 bg-gradient-to-r from-indigo-300 via-70% to-purple-300"></div>
+          <div className="h-32 bg-gradient-to-r from-blue-300 via-70% to-blue-500"></div>
 
           {/* Profile Content */}
           <div className="px-8 pb-8">
@@ -122,43 +120,69 @@ export function Profile() {
                   </p>
                 </div>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {memberships.map((membership) => (
-                    <div
-                      key={membership.club_id}
-                      className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200"
-                    >
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900">
-                          Club ID: {membership.club_id}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          Joined:{" "}
-                          {new Date(membership.joined_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={
-                            membership.role === "MODERATOR" ? "purple" : "blue"
+                  {memberships.map((membership) => {
+                    // Only show arrow link for moderator or admin roles, not for members
+                    let switchButton = null;
+                    if (membership.role === "MODERATOR") {
+                      switchButton = (
+                        <button
+                          onClick={() =>
+                            navigate(`/moderator/${membership.club_id}/home`)
                           }
-                          className="font-semibold"
+                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
+                          title="Go to Moderator Pages"
                         >
-                          {membership.role}
-                        </Badge>
-                        {membership.role === "MODERATOR" && (
-                          <button
-                            onClick={() =>
-                              navigate(`/moderator/${clubId}/home`)
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      );
+                    } else if (membership.role === "ADMIN") {
+                      switchButton = (
+                        <button
+                          onClick={() =>
+                            navigate(`/admin/${membership.club_id}/home`)
+                          }
+                          className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors cursor-pointer"
+                          title="Go to Admin Pages"
+                        >
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={membership.club_name}
+                        className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200"
+                      >
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-slate-900">
+                            {membership.club_name}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Joined:{" "}
+                            {new Date(
+                              membership.joined_at
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={
+                              membership.role === "ADMIN"
+                                ? "yellow"
+                                : membership.role === "MODERATOR"
+                                ? "purple"
+                                : "blue"
                             }
-                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
-                            title="Switch to Moderator View"
+                            className="font-semibold"
                           >
-                            <ArrowRight className="w-4 h-4" />
-                          </button>
-                        )}
+                            {membership.role}
+                          </Badge>
+                          {switchButton}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -4,9 +4,9 @@ import WelcomeHeader from "./components/WelcomeHeader";
 import {
   Package,
   Users,
-  CheckCircle,
   Building2,
   UserPlus,
+  PackagePlus,
   Settings,
   Clock,
   TrendingUp,
@@ -18,13 +18,13 @@ import {
 } from "../../../entities/items";
 import { useMemo } from "react";
 
-export default function ModeratorHome() {
+export default function AdminHome() {
   const navigate = useNavigate();
   const { memberships, isLoading } = useUserProfile();
 
-  const moderatorClub = memberships.find((m) => m.role === "MODERATOR");
-  const clubId = moderatorClub?.club_id;
-  const clubName = moderatorClub?.club_name;
+  const adminClub = memberships.find((m) => m.role === "ADMIN");
+  const clubId = adminClub?.club_id;
+  const clubName = adminClub?.club_name;
 
   // Fetch club statistics
   const { data: membersData } = useSearchClubMembers(clubId || 0);
@@ -45,8 +45,6 @@ export default function ModeratorHome() {
   }, [itemsData]);
   const pendingApprovals = approvalsData?.length || 0;
 
-  console.log(itemsData);
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
@@ -58,8 +56,8 @@ export default function ModeratorHome() {
     );
   }
 
-  // If no moderator club, show message
-  if (!moderatorClub || !clubId) {
+  // If no admin club, show message
+  if (!adminClub || !clubId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 flex items-center justify-center">
         <div className="text-center max-w-md">
@@ -70,8 +68,8 @@ export default function ModeratorHome() {
             No Club Assigned
           </h2>
           <p className="text-slate-600 mb-6">
-            You don't have any club assigned as a moderator yet. Please contact
-            an administrator.
+            You don't have any club assigned as an admin yet. Please contact an
+            administrator.
           </p>
           <button
             onClick={() => navigate("/")}
@@ -86,13 +84,13 @@ export default function ModeratorHome() {
 
   const quickActions = [
     {
-      title: "Approve Items",
-      description: "Review and approve pending items",
-      icon: CheckCircle,
-      bgColor: "bg-green-50",
-      textColor: "text-green-600",
-      hoverBg: "hover:bg-green-100",
-      onClick: () => navigate(`/moderator/${clubId}/approve-item`),
+      title: "Add Item",
+      description: "Add new items to your club",
+      icon: PackagePlus,
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-600",
+      hoverBg: "hover:bg-blue-100",
+      onClick: () => navigate(`/admin/${clubId}/club-management/add-item`),
     },
     {
       title: "Manage Members",
@@ -101,7 +99,7 @@ export default function ModeratorHome() {
       bgColor: "bg-purple-50",
       textColor: "text-purple-600",
       hoverBg: "hover:bg-purple-100",
-      onClick: () => navigate(`/moderator/${clubId}/member-management`),
+      onClick: () => navigate(`/admin/${clubId}/member-management`),
     },
     {
       title: "Manage Club",
@@ -110,7 +108,7 @@ export default function ModeratorHome() {
       bgColor: "bg-orange-50",
       textColor: "text-orange-600",
       hoverBg: "hover:bg-orange-100",
-      onClick: () => navigate(`/moderator/${clubId}/club-management`),
+      onClick: () => navigate(`/admin/${clubId}/club-management`),
     },
   ];
 
@@ -154,7 +152,7 @@ export default function ModeratorHome() {
               </div>
               <p className="text-indigo-100 text-xs md:text-sm">
                 Joined:{" "}
-                {new Date(moderatorClub.joined_at).toLocaleDateString("en-US", {
+                {new Date(adminClub.joined_at).toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
@@ -162,7 +160,7 @@ export default function ModeratorHome() {
               </p>
             </div>
             {/* <button
-              onClick={() => navigate(`/moderator/club-management/${clubId}`)}
+              onClick={() => navigate(`/admin/${clubId}/club-management`)}
               className="bg-white text-indigo-600 px-4 py-2.5 md:px-6 md:py-3 rounded-lg md:rounded-xl font-semibold hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2 text-sm md:text-base flex-shrink-0"
             >
               <Settings className="w-4 h-4" />

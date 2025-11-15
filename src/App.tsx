@@ -6,7 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { queryClient as defaultQueryClient } from "./shared/lib/react-query";
 import { store } from "./shared/store";
 import { useAuthCallback } from "./hooks";
-import { ProtectedRoute, ModeratorRoute } from "./components/auth";
+import { ProtectedRoute, ModeratorRoute, AdminRoute } from "./components/auth";
 import {
   Home,
   SearchClubs,
@@ -18,15 +18,23 @@ import {
 import NotFound from "./pages/not-found/NotFound";
 import {
   ClubManagement,
-  AddItem,
   ApproveItem,
   ModeratorHome,
   MemberManagement,
   AddMemberToClub,
   MyClubs,
-  AddNewItem,
   ModeratorProfile,
 } from "./pages/moderator";
+import {
+  AdminProfile,
+  AdminHome,
+  AdminMemberManagement,
+  AdminAddMemberToClub,
+  AdminApproveItem,
+  AdminMyClubs,
+  AdminClubManagement,
+  AdminAddItem,
+} from "./pages/admin";
 import Signin from "./pages/signin";
 import { Profile } from "./pages/shared";
 
@@ -118,22 +126,6 @@ function AppContent() {
           }
         />
         <Route
-          path="/moderator/:id/add-item"
-          element={
-            <ModeratorRoute>
-              <AddItem />
-            </ModeratorRoute>
-          }
-        />
-        <Route
-          path="/moderator/add-item/:id"
-          element={
-            <ModeratorRoute>
-              <AddNewItem />
-            </ModeratorRoute>
-          }
-        />
-        <Route
           path="/moderator/:id/approve-item"
           element={
             <ModeratorRoute>
@@ -171,6 +163,71 @@ function AppContent() {
             <ModeratorRoute>
               <ModeratorProfile />
             </ModeratorRoute>
+          }
+        />
+        {/* Admin Routes */}
+        <Route
+          path="/admin/myclubs"
+          element={
+            <AdminRoute>
+              <AdminMyClubs />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/:id/club-management"
+          element={
+            <AdminRoute>
+              <AdminClubManagement />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/:id/club-management/add-item"
+          element={
+            <AdminRoute>
+              <AdminAddItem />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/:id/approve-item"
+          element={
+            <AdminRoute>
+              <AdminApproveItem />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/:id/member-management"
+          element={
+            <AdminRoute>
+              <AdminMemberManagement />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/:id/member-management/add-member"
+          element={
+            <AdminRoute>
+              <AdminAddMemberToClub />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/:id/home"
+          element={
+            <AdminRoute>
+              <AdminHome />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/profile"
+          element={
+            <AdminRoute>
+              <AdminProfile />
+            </AdminRoute>
           }
         />
       </Routes>
