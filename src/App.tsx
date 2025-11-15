@@ -14,6 +14,7 @@ import {
   ClubsMembers,
   ItemDetail,
   History,
+  ConfirmBorrow,
 } from "./pages/user";
 import NotFound from "./pages/not-found/NotFound";
 import {
@@ -97,6 +98,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <ItemDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/items/:id/confirm"
+          element={
+            <ProtectedRoute>
+              <ConfirmBorrow />
             </ProtectedRoute>
           }
         />
