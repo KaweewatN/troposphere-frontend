@@ -1,9 +1,18 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Image } from "../../components/ui";
 import { usePreventOverflow } from "../../hooks/usePreventOverflow";
 
 export default function NotFound() {
   usePreventOverflow();
+  const navigate = useNavigate();
+
+  const handleGoBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  };
 
   return (
     <div className="h-screen overflow-hidden flex items-center justify-center px-4">
@@ -22,12 +31,12 @@ export default function NotFound() {
         <p className="text-theme-body mb-6">
           The page you're looking for doesn't exist.
         </p>
-        <Link
-          to="/"
-          className="inline-block px-6 py-3 bg-theme-purple text-white rounded-lg hover:bg-theme-purple-dark transition-colors"
+        <button
+          onClick={handleGoBack}
+          className="inline-block px-6 py-3 bg-theme-purple text-white rounded-lg hover:bg-theme-purple-dark transition-colors cursor-pointer"
         >
-          Back home
-        </Link>
+          Go Back
+        </button>
       </div>
     </div>
   );
