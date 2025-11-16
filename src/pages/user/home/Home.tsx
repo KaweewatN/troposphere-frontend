@@ -105,11 +105,7 @@ export default function Home() {
           <div className="grid grid-cols-2 gap-4">
             {userClubs.map((club) => (
               <Link to={`/clubs/${club.club_id}`} key={club.club_id}>
-                <Card
-                  imageUrl={club.image_path}
-                  name={club.club_name}
-                  description="10 Equipments Available"
-                />
+                <Card imageUrl={club.image_path} name={club.club_name} />
               </Link>
             ))}
           </div>

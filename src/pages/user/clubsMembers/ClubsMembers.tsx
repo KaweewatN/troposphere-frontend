@@ -3,7 +3,7 @@ import {
   useSearchClubDetails,
   useSearchClubMembers,
 } from "../../../entities/clubs";
-import { Image, Button } from "../../../components/ui";
+import { Image, Button, Badge } from "../../../components/ui";
 import { Mail, User } from "lucide-react";
 
 export default function ClubsMembers() {
@@ -26,6 +26,24 @@ export default function ClubsMembers() {
   const clubDetails = clubDetailsResponse?.data;
   const clubMembers = clubMembersResponse?.data || [];
   const totalMembers = clubMembersResponse?.total_members || 0;
+
+  // Helper function to get role name from number
+  const getRoleName = (role: number | string): string => {
+    const roleNum = typeof role === "string" ? parseInt(role) : role;
+    if (roleNum === 3) return "ADMIN";
+    if (roleNum === 2) return "MODERATOR";
+    return "MEMBER";
+  };
+
+  // Helper function to get role badge variant
+  const getRoleBadgeVariant = (
+    role: number | string
+  ): "yellow" | "purple" | "blue" => {
+    const roleNum = typeof role === "string" ? parseInt(role) : role;
+    if (roleNum === 3) return "yellow";
+    if (roleNum === 2) return "purple";
+    return "blue";
+  };
 
   const isLoading = isLoadingDetails || isLoadingMembers;
   const hasError = detailsError || membersError;
@@ -165,6 +183,12 @@ export default function ClubsMembers() {
                       <h3 className="font-semibold text-black text-base truncate">
                         {member.name}
                       </h3>
+                      <Badge
+                        variant={getRoleBadgeVariant(member.role)}
+                        className="text-xs font-semibold ml-2"
+                      >
+                        {getRoleName(member.role)}
+                      </Badge>
                     </div>
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-theme-description flex-shrink-0" />

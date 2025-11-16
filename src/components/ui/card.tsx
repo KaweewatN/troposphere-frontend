@@ -3,7 +3,7 @@ import Image from "./Image";
 interface CardProps {
   imageUrl: string;
   name: string;
-  description: string;
+  description?: string;
 }
 
 export default function Card(props: CardProps) {
@@ -12,7 +12,9 @@ export default function Card(props: CardProps) {
       <Image src={props.imageUrl} alt={props.name} className="rounded" />
       <div className="mt-2 space-y-2">
         <h2 className="text-black font-semibold text-sm">{props.name}</h2>
-        <p className="text-xs text-theme-description">{props.description}</p>
+        {props.description && (
+          <p className="text-xs text-theme-description">{props.description}</p>
+        )}
       </div>
     </div>
   );
