@@ -22,7 +22,12 @@ export default function ModeratorHome() {
   const navigate = useNavigate();
   const { memberships, isLoading } = useUserProfile();
 
-  const moderatorClub = memberships.find((m) => m.role === "MODERATOR");
+  // Get all moderator clubs and use the one with highest club_id (or you can change logic)
+  const moderatorClubs = memberships.filter((m) => m.role === "MODERATOR");
+  const moderatorClub =
+    moderatorClubs.length > 0
+      ? moderatorClubs[moderatorClubs.length - 1]
+      : undefined;
   const clubId = moderatorClub?.club_id;
   const clubName = moderatorClub?.club_name;
 
@@ -44,8 +49,6 @@ export default function ModeratorHome() {
     ).length;
   }, [itemsData]);
   const pendingApprovals = approvalsData?.length || 0;
-
-  console.log(itemsData);
 
   if (isLoading) {
     return (
@@ -150,7 +153,9 @@ export default function ModeratorHome() {
             <div className="flex-1">
               <div className="flex items-center gap-2 md:gap-3 mb-3">
                 <Building2 className="w-6 h-6 md:w-8 md:h-8 flex-shrink-0" />
-                <h2 className="text-xl md:text-2xl font-bold">{clubName}</h2>
+                <h2 className="text-xl md:text-2xl font-bold">
+                  {clubName ? clubName : `Club ID: ${clubId}`}
+                </h2>
               </div>
               <p className="text-indigo-100 text-xs md:text-sm">
                 Joined:{" "}

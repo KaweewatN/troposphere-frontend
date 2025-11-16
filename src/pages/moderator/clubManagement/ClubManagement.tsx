@@ -1,15 +1,14 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useSearchClubDetails } from "../../../entities/clubs";
 import {
-  useSearchItemsInClub,
-  useDeleteItem,
-  useDeleteItemImages,
-} from "../../../entities/items";
+  useSearchClubDetails,
+  useUpdateItemInClub,
+} from "../../../entities/clubs";
+import { useSearchItemsInClub, useSearchItemId } from "../../../entities/items";
 import type { ItemSearchInClub } from "../../../entities/items/types/items.query.types";
 import { Image, Badge, Button, Modal } from "../../../components/ui";
 import SearchBar from "../../../components/ui/searchBar";
 import { showSuccess, showError } from "../../../components/ui/toast";
-import { Check, TriangleAlert, ShieldAlert, Edit, Trash2 } from "lucide-react";
+import { Check, TriangleAlert, ShieldAlert, Edit } from "lucide-react";
 import { BackButton } from "../../../components/ui";
 import { AxiosError } from "axios";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -23,17 +22,24 @@ export default function ClubManagement() {
   const [allItems, setAllItems] = useState<ItemSearchInClub[]>([]);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{
-    id: number;
-    name: string;
-  } | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    description: "",
+    status: "AVAILABLE" as "AVAILABLE" | "BORROWED" | "UNAVAILABLE",
+    is_high_risk: false,
+    qr_code: "",
+  });
 
   const {
     data: clubDetailsResponse,
     isLoading: isLoadingDetails,
     error: detailsError,
   } = useSearchClubDetails(clubId);
+
+  const { data: itemDetailsResponse, isLoading: isLoadingItemDetails } =
+    useSearchItemId(itemToEdit || 0);
 
   const {
     data: clubItemsResponse,
@@ -87,62 +93,72 @@ export default function ClubManagement() {
     };
   }, [handleObserver]);
 
-  // Delete mutations
-  const { mutate: deleteItem, isPending: isDeletingItem } = useDeleteItem({
-    onSuccess: () => {
-      deleteItemImages({ itemId: itemToDelete?.id.toString() || "" });
-    },
-    onError: (error) => {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "detail" in error
-          ? error.detail[0]?.msg || "Failed to delete item"
-          : "Failed to delete item";
-      showError(`Failed to delete item: ${errorMessage}`);
-      setIsDeleteModalOpen(false);
-      setItemToDelete(null);
-    },
-  });
+  // Edit mutations
+  const { mutate: updateItem, isPending: isUpdating } = useUpdateItemInClub(
+    clubId,
+    itemToEdit || 0
+  );
 
-  const { mutate: deleteItemImages, isPending: isDeletingImages } =
-    useDeleteItemImages({
-      onSuccess: () => {
-        showSuccess(`Item "${itemToDelete?.name}" deleted successfully!`);
-        setIsDeleteModalOpen(false);
-        setItemToDelete(null);
-        refetchItems();
-      },
-      onError: (error) => {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "detail" in error
-            ? error.detail[0]?.msg || "Failed to delete item images"
-            : "Failed to delete item images";
-        showError(`Failed to delete images: ${errorMessage}`);
-        setIsDeleteModalOpen(false);
-        setItemToDelete(null);
-      },
+  const handleEditClick = (itemId: number) => {
+    setItemToEdit(itemId);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditModalOpen(false);
+    setItemToEdit(null);
+    setEditForm({
+      name: "",
+      description: "",
+      status: "AVAILABLE",
+      is_high_risk: false,
+      qr_code: "",
     });
-
-  const handleDeleteClick = (itemId: number, itemName: string) => {
-    setItemToDelete({ id: itemId, name: itemName });
-    setIsDeleteModalOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (itemToDelete) {
-      deleteItem({ itemId: itemToDelete.id.toString() });
+  const handleConfirmEdit = () => {
+    if (!itemToEdit) return;
+
+    updateItem(
+      {
+        name: editForm.name,
+        description: editForm.description,
+        status: editForm.status,
+        is_high_risk: editForm.is_high_risk,
+        qr_code: editForm.qr_code,
+      },
+      {
+        onSuccess: () => {
+          showSuccess(`Item "${editForm.name}" updated successfully!`);
+          handleCancelEdit();
+          refetchItems();
+        },
+        onError: (error) => {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "detail" in error
+              ? error.detail[0]?.msg || "Failed to update item"
+              : "Failed to update item";
+          showError(`Failed to update item: ${errorMessage}`);
+        },
+      }
+    );
+  };
+
+  // Populate form when item details are loaded
+  useEffect(() => {
+    if (itemDetailsResponse && isEditModalOpen) {
+      const item = itemDetailsResponse;
+      setEditForm({
+        name: item.name,
+        description: item.description,
+        status: item.status as "AVAILABLE" | "BORROWED" | "UNAVAILABLE",
+        is_high_risk: item.is_high_risk,
+        qr_code: item.qr_code,
+      });
     }
-  };
-
-  const handleCancelDelete = () => {
-    setIsDeleteModalOpen(false);
-    setItemToDelete(null);
-  };
-
-  const isDeleting = isDeletingItem || isDeletingImages;
+  }, [itemDetailsResponse, isEditModalOpen]);
 
   const isLoading = isLoadingDetails || isLoadingItems;
   const hasError = detailsError || itemsError;
@@ -412,22 +428,12 @@ export default function ClubManagement() {
                       <button
                         onClick={(e) => {
                           e.preventDefault();
-                          navigate(`/moderator/edit-item/${item.id}`);
+                          handleEditClick(item.id);
                         }}
                         className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors text-sm font-medium"
                       >
                         <Edit className="h-3.5 w-3.5" />
                         Edit
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleDeleteClick(item.id, item.name);
-                        }}
-                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors text-sm font-medium"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        Delete
                       </button>
                     </div>
                   </div>
@@ -458,52 +464,148 @@ export default function ClubManagement() {
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Edit Item Modal */}
       <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={handleCancelDelete}
-        title="Delete Item"
-        icon={<Trash2 className="h-5 w-5 text-red-600" />}
-        titleColor="text-red-600"
-        maxWidth="sm"
+        isOpen={isEditModalOpen}
+        onClose={handleCancelEdit}
+        title="Edit Item"
+        icon={<Edit className="h-5 w-5 text-blue-600" />}
+        titleColor="text-blue-600"
+        maxWidth="md"
       >
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            Are you sure you want to delete{" "}
-            <span className="font-semibold">"{itemToDelete?.name}"</span>?
-          </p>
-          <p className="text-sm text-gray-600">
-            This action will delete the item and all its associated images. This
-            cannot be undone.
-          </p>
-
-          <div className="flex gap-3 justify-end mt-6">
-            <button
-              onClick={handleCancelDelete}
-              disabled={isDeleting}
-              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleConfirmDelete}
-              disabled={isDeleting}
-              className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isDeleting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </>
-              )}
-            </button>
+        {isLoadingItemDetails ? (
+          <div className="py-8 text-center">
+            <div className="inline-block w-6 h-6 border-4 border-theme-purple border-t-transparent rounded-full animate-spin" />
+            <p className="mt-2 text-sm text-neutral-600">
+              Loading item details...
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Name Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Item Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={editForm.name}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, name: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter item name"
+              />
+            </div>
+
+            {/* Description Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={editForm.description}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, description: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                placeholder="Enter item description"
+              />
+            </div>
+
+            {/* Status Select */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={editForm.status}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    status: e.target.value as
+                      | "AVAILABLE"
+                      | "BORROWED"
+                      | "UNAVAILABLE",
+                  })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="AVAILABLE">Available</option>
+                <option value="BORROWED">Borrowed</option>
+                <option value="UNAVAILABLE">Unavailable</option>
+              </select>
+            </div>
+
+            {/* QR Code Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                QR Code <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={editForm.qr_code}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, qr_code: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter QR code"
+              />
+            </div>
+
+            {/* High Risk Checkbox */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_high_risk"
+                checked={editForm.is_high_risk}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, is_high_risk: e.target.checked })
+                }
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label
+                htmlFor="is_high_risk"
+                className="text-sm font-medium text-gray-700"
+              >
+                High Risk Item
+              </label>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 justify-end mt-6 pt-4 border-t">
+              <button
+                onClick={handleCancelEdit}
+                disabled={isUpdating}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmEdit}
+                disabled={
+                  isUpdating ||
+                  !editForm.name ||
+                  !editForm.description ||
+                  !editForm.qr_code
+                }
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isUpdating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Edit className="h-4 w-4" />
+                    Update Item
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

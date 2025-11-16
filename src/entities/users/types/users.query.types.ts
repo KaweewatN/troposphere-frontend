@@ -8,7 +8,9 @@ export interface UserClubs {
 
 export interface UserHistory {
   transaction_id: number;
+  item_id: number;
   item_name: string;
+  club_id: number;
   status: string;
   borrow_date: string;
   return_date: string;

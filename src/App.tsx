@@ -15,6 +15,8 @@ import {
   ItemDetail,
   History,
   ConfirmBorrow,
+  ReturnItem,
+  ReturnItemConfirmation,
 } from "./pages/user";
 import NotFound from "./pages/not-found/NotFound";
 import {
@@ -106,6 +108,22 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <ConfirmBorrow />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/items/return/:id"
+          element={
+            <ProtectedRoute>
+              <ReturnItem />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/items/return/:id/confirm"
+          element={
+            <ProtectedRoute>
+              <ReturnItemConfirmation />
             </ProtectedRoute>
           }
         />

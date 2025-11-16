@@ -16,3 +16,4 @@ export {
   showInfo,
   showToast,
 } from "./toast";
+export { QRScanner } from "./QRScanner";

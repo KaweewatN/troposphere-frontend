@@ -5,3 +5,5 @@ export { default as ClubsMembers } from "./clubsMembers/ClubsMembers";
 export { default as ItemDetail } from "./item-detail/ItemDetail";
 export { default as History } from "./history/History";
 export { default as ConfirmBorrow } from "./confirmation/confirmBorrow";
+export { default as ReturnItem } from "./returnItem/ReturnItem";
+export { default as ReturnItemConfirmation } from "./returnItemConfirmation/ReturnItemConfirmation";

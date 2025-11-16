@@ -167,12 +167,14 @@ export function AdminProfile() {
 
                     return (
                       <div
-                        key={membership.club_name}
+                        key={membership.club_id}
                         className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200"
                       >
                         <div className="flex-1">
                           <p className="text-sm font-semibold text-slate-900">
-                            {membership.club_name}
+                            {membership.club_name
+                              ? membership.club_name
+                              : `Club ID: ${membership.club_id}`}
                           </p>
                           <p className="text-xs text-slate-500">
                             Joined:{" "}

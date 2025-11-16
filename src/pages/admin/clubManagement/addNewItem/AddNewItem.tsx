@@ -33,7 +33,7 @@ export default function AddNewItem() {
         showSuccess(`Item "${response.name}" added successfully!`);
         reset();
         setTimeout(() => {
-          navigate("/admin/myclubs");
+          navigate(`/admin/${clubId}/club-management`);
           window.location.reload();
         }, 500);
       },

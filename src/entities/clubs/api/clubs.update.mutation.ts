@@ -1,6 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { createUpdateMutationFn } from "../../../shared/api";
-import type { ValidationError } from "../types";
+import type {
+  ValidationError,
+  UpdateItemInClubRequest,
+  UpdateItemInClubResponse,
+} from "../types";
 
 interface AddMemberToClubRequest {
   role: number;
@@ -23,5 +27,21 @@ export function useAddMemberToClub(clubId: number, userId: string) {
         path: `/clubs/${clubId}/roles/${userId}`,
         body,
       }),
+  });
+}
+
+export function useUpdateItemInClub(clubId: number, itemId: number) {
+  return useMutation<
+    UpdateItemInClubResponse,
+    ValidationError | Error,
+    UpdateItemInClubRequest
+  >({
+    mutationFn: (body) =>
+      createUpdateMutationFn<UpdateItemInClubResponse, UpdateItemInClubRequest>(
+        {
+          path: `/clubs/${clubId}/items/${itemId}`,
+          body,
+        }
+      ),
   });
 }

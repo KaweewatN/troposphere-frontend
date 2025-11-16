@@ -1,9 +1,23 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useSearchItemId } from "../../../entities/items";
 import { useSearchClubDetails } from "../../../entities/clubs";
-import { Image, Badge, Button } from "../../../components/ui";
-import { ArrowLeft, Calendar, Package, Shield, Building2, Heart } from "lucide-react";
+import {
+  Image,
+  Badge,
+  Button,
+  QRScanner,
+  showError,
+} from "../../../components/ui";
+import {
+  ArrowLeft,
+  Calendar,
+  Package,
+  Shield,
+  Building2,
+  Heart,
+} from "lucide-react";
 import { useState } from "react";
+import { useUserProfile } from "../../../hooks/useUserProfile";
 
 export default function ItemDetail() {
   const { id } = useParams<{ id: string }>();
@@ -11,18 +25,21 @@ export default function ItemDetail() {
   const itemId = parseInt(id || "0", 10);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
-  const {
-    data: itemData,
-    isLoading,
-    error,
-  } = useSearchItemId(itemId);
+  const { data: itemData, isLoading, error } = useSearchItemId(itemId);
+  const { memberships } = useUserProfile();
 
   // Fetch club details to get the club name
-  const {
-    data: clubData,
-    isLoading: isLoadingClub,
-  } = useSearchClubDetails(itemData?.club_id || 0);
+  const { data: clubData, isLoading: isLoadingClub } = useSearchClubDetails(
+    itemData?.club_id || 0
+  );
+
+  // Check if user is moderator or admin of this club
+  const userRole = memberships.find(
+    (m) => m.club_id === itemData?.club_id
+  )?.role;
+  const isModeratorOrAdmin = userRole === "MODERATOR" || userRole === "ADMIN";
 
   // Format date helper
   const formatDate = (dateString: string) => {
@@ -38,9 +55,11 @@ export default function ItemDetail() {
   const getCategory = (name: string): string => {
     const lowerName = name.toLowerCase();
     if (lowerName.includes("camera")) return "Camera";
-    if (lowerName.includes("printer") || lowerName.includes("3d")) return "3D Printer";
+    if (lowerName.includes("printer") || lowerName.includes("3d"))
+      return "3D Printer";
     if (lowerName.includes("drone")) return "Drone";
-    if (lowerName.includes("laptop") || lowerName.includes("computer")) return "Computer";
+    if (lowerName.includes("laptop") || lowerName.includes("computer"))
+      return "Computer";
     return "Equipment";
   };
 
@@ -48,7 +67,9 @@ export default function ItemDetail() {
     return (
       <div className="container mx-auto py-6 px-4 max-w-screen-lg">
         <div className="text-center py-12">
-          <h2 className="text-xl font-semibold text-red-600">Invalid Item ID</h2>
+          <h2 className="text-xl font-semibold text-red-600">
+            Invalid Item ID
+          </h2>
           <Button onClick={() => navigate("/search-clubs")} className="mt-4">
             Back to Search
           </Button>
@@ -76,7 +97,8 @@ export default function ItemDetail() {
             Error loading item details
           </h2>
           <p className="text-neutral-600 mt-2">
-            The item you're looking for doesn't exist or there was an error loading it.
+            The item you're looking for doesn't exist or there was an error
+            loading it.
           </p>
           <Button onClick={() => navigate(-1)} className="mt-4">
             Go Back
@@ -89,9 +111,38 @@ export default function ItemDetail() {
   const category = getCategory(itemData.name);
   const description = itemData.description || "No description available.";
   const shouldTruncate = description.length > 150;
-  const displayDescription = showFullDescription || !shouldTruncate
-    ? description
-    : description.substring(0, 150) + "...";
+  const displayDescription =
+    showFullDescription || !shouldTruncate
+      ? description
+      : description.substring(0, 150) + "...";
+
+  // Handle QR scan
+  const handleQRScan = (qrCode: string) => {
+    setIsQRScannerOpen(false);
+
+    // Check if scanned QR code matches the item's QR code
+    if (qrCode === itemData?.qr_code) {
+      // Navigate to confirmation page with QR code in state
+      navigate(`/items/${itemId}/confirm`, {
+        state: { scannedQrCode: qrCode },
+      });
+    } else {
+      // Show error if QR code doesn't match
+      showError("QR code does not match this item");
+    }
+  };
+
+  // Handle opening QR scanner
+  const handleBorrowClick = () => {
+    if (itemData?.status === "AVAILABLE") {
+      setIsQRScannerOpen(true);
+    }
+  };
+
+  // Handle closing QR scanner
+  const handleCloseScanner = () => {
+    setIsQRScannerOpen(false);
+  };
 
   return (
     <div className="container mx-auto max-w-screen-lg pb-24">
@@ -145,9 +196,14 @@ export default function ItemDetail() {
             <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
               <Shield className="h-5 w-5 text-red-600" />
             </div>
-            <span className="text-sm text-theme-description font-medium">Type</span>
+            <span className="text-sm text-theme-description font-medium">
+              Type
+            </span>
           </div>
-          <Badge variant={itemData.is_high_risk ? "red" : "gray"} className="font-semibold">
+          <Badge
+            variant={itemData.is_high_risk ? "red" : "gray"}
+            className="font-semibold"
+          >
             {itemData.is_high_risk ? "High risk" : "Standard"}
           </Badge>
         </div>
@@ -158,7 +214,9 @@ export default function ItemDetail() {
             <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
               <Package className="h-5 w-5 text-blue-600" />
             </div>
-            <span className="text-sm text-theme-description font-medium">Category</span>
+            <span className="text-sm text-theme-description font-medium">
+              Category
+            </span>
           </div>
           <span className="text-theme-heading font-semibold">{category}</span>
         </div>
@@ -169,7 +227,9 @@ export default function ItemDetail() {
             <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
               <Package className="h-5 w-5 text-green-600" />
             </div>
-            <span className="text-sm text-theme-description font-medium">Item Status</span>
+            <span className="text-sm text-theme-description font-medium">
+              Item Status
+            </span>
           </div>
           <Badge
             variant={itemData.status === "AVAILABLE" ? "green" : "yellow"}
@@ -185,10 +245,14 @@ export default function ItemDetail() {
             <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
               <Building2 className="h-5 w-5 text-theme-purple" />
             </div>
-            <span className="text-sm text-theme-description font-medium">Club</span>
+            <span className="text-sm text-theme-description font-medium">
+              Club
+            </span>
           </div>
           <span className="text-theme-heading font-semibold">
-            {isLoadingClub ? "Loading..." : clubData?.data?.name || "Unknown Club"}
+            {isLoadingClub
+              ? "Loading..."
+              : clubData?.data?.name || "Unknown Club"}
           </span>
         </div>
 
@@ -198,7 +262,9 @@ export default function ItemDetail() {
             <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center">
               <Calendar className="h-5 w-5 text-gray-600" />
             </div>
-            <span className="text-sm text-theme-description font-medium">Created at</span>
+            <span className="text-sm text-theme-description font-medium">
+              Created at
+            </span>
           </div>
           <span className="text-theme-heading font-semibold">
             {formatDate(itemData.created_at)}
@@ -208,7 +274,9 @@ export default function ItemDetail() {
 
       {/* Description Section */}
       <div className="mb-16">
-        <h2 className="text-xl font-bold text-theme-heading mb-3">Description</h2>
+        <h2 className="text-xl font-bold text-theme-heading mb-3">
+          Description
+        </h2>
         <p className="text-theme-description leading-relaxed">
           {displayDescription}
         </p>
@@ -228,11 +296,14 @@ export default function ItemDetail() {
           {/* Favorite Button */}
           <button
             onClick={() => setIsFavorite(!isFavorite)}
-            className={`flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg cursor-pointer ${isFavorite
-              ? "bg-red-500 text-white hover:bg-red-600"
-              : "bg-white text-gray-400 hover:text-red-500 border border-gray-200"
-              }`}
-            aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            className={`flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg cursor-pointer ${
+              isFavorite
+                ? "bg-red-500 text-white hover:bg-red-600"
+                : "bg-white text-gray-400 hover:text-red-500 border border-gray-200"
+            }`}
+            aria-label={
+              isFavorite ? "Remove from favorites" : "Add to favorites"
+            }
           >
             <Heart
               className={`h-6 w-6 ${isFavorite ? "fill-current" : ""}`}
@@ -242,14 +313,28 @@ export default function ItemDetail() {
 
           {/* Borrow Button */}
           <Button
-            onClick={() => navigate(`/items/${itemId}/confirm`)}
+            onClick={handleBorrowClick}
             className="flex-1 py-4 text-base font-semibold shadow-lg"
-            disabled={itemData.status !== "AVAILABLE"}
+            disabled={itemData.status !== "AVAILABLE" || isModeratorOrAdmin}
           >
-            {itemData.status === "AVAILABLE" ? "Borrow this item" : "Item Not Available"}
+            {isModeratorOrAdmin
+              ? `You are ${
+                  userRole === "MODERATOR" ? "a moderator" : "an admin"
+                }`
+              : itemData.status === "AVAILABLE"
+              ? "Borrow this item"
+              : "Item Not Available"}
           </Button>
         </div>
       </div>
+
+      {/* QR Scanner Modal */}
+      <QRScanner
+        isOpen={isQRScannerOpen}
+        onClose={handleCloseScanner}
+        onScan={handleQRScan}
+        timeout={15000}
+      />
     </div>
   );
 }

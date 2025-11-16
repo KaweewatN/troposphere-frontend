@@ -21,6 +21,11 @@ export default function Home() {
   const userClubs = clubsResponse?.data || [];
   const userHistory = historyResponse?.data || [];
 
+  // Filter only approved borrowed items
+  const approvedBorrowedItems = userHistory.filter(
+    (item) => item.status === "approved"
+  );
+
   // Handle search - navigate to search page with query
   const handleSearch = (query: string) => {
     if (query.trim()) {
@@ -53,9 +58,9 @@ export default function Home() {
             <div className="inline-block w-6 h-6 border-4 border-theme-purple border-t-transparent rounded-full animate-spin" />
             <p className="mt-2 text-theme-body text-sm">Loading history...</p>
           </div>
-        ) : userHistory.length > 0 ? (
+        ) : approvedBorrowedItems.length > 0 ? (
           <div className="space-y-3">
-            {userHistory.map((item: UserHistory) => (
+            {approvedBorrowedItems.map((item: UserHistory) => (
               <div
                 key={item.transaction_id}
                 className="bg-theme-secondary rounded-2xl px-4 py-2 flex items-center justify-start gap-x-7"

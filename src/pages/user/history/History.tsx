@@ -1,17 +1,14 @@
 import { useSearchUserHistory } from "../../../entities/users";
-import { Image } from "../../../components/ui";
+import { Button } from "../../../components/ui";
 import type { UserHistory } from "../../../entities/users/types";
-import { Package } from "lucide-react";
+import { Package, RotateCcw } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function History() {
+  const navigate = useNavigate();
   const { data: historyResponse, isLoading } = useSearchUserHistory();
 
   const userHistory = historyResponse?.data || [];
-
-  // Show all items if no status filtering works
-  // The backend might return all borrowed items without specific status filtering
-  const currentlyBorrowed = userHistory.length > 0 ? userHistory : [];
-  const borrowHistory: UserHistory[] = [];
 
   // Format date helper
   const formatDate = (dateString: string) => {
@@ -23,13 +20,33 @@ export default function History() {
     });
   };
 
-  // Check if item has met the due date (return date has passed)
-  const hasMetDueDate = (returnDate: string) => {
+  // Check if item is overdue (return date has passed)
+  const isOverdue = (returnDate: string) => {
     const dueDate = new Date(returnDate);
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset time to compare only dates
-    return dueDate <= today;
+    today.setHours(0, 0, 0, 0);
+    dueDate.setHours(0, 0, 0, 0);
+    return today > dueDate;
   };
+
+  // Categorize items based on status and overdue
+  const overdueItems = userHistory.filter(
+    (item) => item.status === "approved" && isOverdue(item.return_date)
+  );
+
+  const currentlyBorrowed = userHistory.filter(
+    (item) => item.status === "approved" && !isOverdue(item.return_date)
+  );
+
+  const pendingItems = userHistory.filter(
+    (item) =>
+      item.status === "pending_approval" ||
+      item.status === "pending_condition_check"
+  );
+
+  const borrowHistory = userHistory.filter(
+    (item) => item.status === "completed" || item.status === "rejected"
+  );
 
   if (isLoading) {
     return (
@@ -49,6 +66,111 @@ export default function History() {
         My Borrowing History
       </h1>
 
+      {/* Overdue Section */}
+      {overdueItems.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-red-600 mb-4">Overdue Items</h2>
+
+          <div className="space-y-4">
+            {overdueItems.map((item: UserHistory) => (
+              <div
+                key={item.transaction_id}
+                className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex items-start gap-4"
+              >
+                {/* Item Icon */}
+                <div className="flex-shrink-0 w-28 h-28 bg-red-100 rounded-xl flex items-center justify-center">
+                  <Package className="h-16 w-16 text-red-400" />
+                </div>
+
+                {/* Item Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-bold text-theme-heading text-lg">
+                      {item.item_name}
+                    </h3>
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full flex-shrink-0 ml-2">
+                      ⚠️ OVERDUE
+                    </span>
+                  </div>
+                  <p className="text-sm text-red-600 font-medium mb-2">
+                    ⏰ This item is overdue! Please return it as soon as
+                    possible.
+                  </p>
+                  <p className="text-sm text-theme-description mb-1">
+                    Date Borrowed: {formatDate(item.borrow_date)}
+                  </p>
+                  <p className="text-sm text-red-600 font-semibold mb-3">
+                    Due Date: {formatDate(item.return_date)}
+                  </p>
+
+                  {/* Return Button */}
+                  <Button
+                    onClick={() =>
+                      navigate(`/items/return/${item.transaction_id}`, {
+                        state: { transaction: item },
+                      })
+                    }
+                    className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white flex items-center gap-2 justify-center"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Return Now
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pending Approval Section */}
+      {pendingItems.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-yellow-600 mb-4">
+            Pending Approval
+          </h2>
+
+          <div className="space-y-4">
+            {pendingItems.map((item: UserHistory) => (
+              <div
+                key={item.transaction_id}
+                className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 flex items-start gap-4"
+              >
+                {/* Item Icon */}
+                <div className="flex-shrink-0 w-28 h-28 bg-yellow-100 rounded-xl flex items-center justify-center">
+                  <Package className="h-16 w-16 text-yellow-400" />
+                </div>
+
+                {/* Item Details */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-bold text-theme-heading text-lg">
+                      {item.item_name}
+                    </h3>
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full flex-shrink-0 ml-2">
+                      ⏳{" "}
+                      {item.status === "pending_approval"
+                        ? "Pending Approval"
+                        : "Pending Check"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-yellow-600 font-medium mb-2">
+                    {item.status === "pending_approval"
+                      ? "⏳ Waiting for moderator to approve your borrow request"
+                      : "⏳ Waiting for moderator to check item condition"}
+                  </p>
+                  <p className="text-sm text-theme-description mb-1">
+                    Borrowed: {formatDate(item.borrow_date)}
+                  </p>
+                  <p className="text-sm text-theme-description mb-3">
+                    Due Date: {formatDate(item.return_date)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Currently Borrowed Section */}
       <div className="mb-8">
         <h2 className="text-xl font-bold text-theme-heading mb-4">
@@ -62,15 +184,9 @@ export default function History() {
                 key={item.transaction_id}
                 className="bg-theme-secondary rounded-2xl p-4 flex items-start gap-4"
               >
-                {/* Item Image */}
-                <div className="flex-shrink-0 w-28 h-28 bg-gray-200 rounded-xl overflow-hidden">
-                  <Image
-                    src={item.item_name || ""}
-                    alt={item.item_name}
-                    className="object-cover w-full h-full rounded-md"
-                    width={112}
-                    height={112}
-                  />
+                {/* Item Icon */}
+                <div className="flex-shrink-0 w-28 h-28 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
+                  <Package className="h-16 w-16 text-blue-400" />
                 </div>
 
                 {/* Item Details */}
@@ -79,29 +195,29 @@ export default function History() {
                     <h3 className="font-bold text-theme-heading text-lg">
                       {item.item_name}
                     </h3>
-                    {hasMetDueDate(item.return_date) && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-full flex-shrink-0 ml-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                        </svg>
-                        Waiting for approval
-                      </span>
-                    )}
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full flex-shrink-0 ml-2">
+                      ✓ Active
+                    </span>
                   </div>
-                  {hasMetDueDate(item.return_date) && (
-                    <p className="text-sm text-yellow-600 font-medium mb-2">
-                      ⏳ This item is waiting for moderator approval to confirm return
-                    </p>
-                  )}
                   <p className="text-sm text-theme-description mb-1">
-                    Date Borrowed: {formatDate(item.borrow_date)}
+                    Borrowed: {formatDate(item.borrow_date)}
                   </p>
-                  <p className="text-sm text-theme-description mb-1">
-                    Date Returned: {formatDate(item.return_date)}
+                  <p className="text-sm text-theme-description mb-3">
+                    Due Date: {formatDate(item.return_date)}
                   </p>
-                  <p className="text-sm text-theme-description">
-                    Condition on return: <span className="font-semibold">Good</span>
-                  </p>
+
+                  {/* Return Button */}
+                  <Button
+                    onClick={() =>
+                      navigate(`/items/return/${item.transaction_id}`, {
+                        state: { transaction: item },
+                      })
+                    }
+                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 justify-center"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Return Item
+                  </Button>
                 </div>
               </div>
             ))}
@@ -109,43 +225,51 @@ export default function History() {
         ) : (
           <div className="w-full inline-flex items-center justify-center py-8 gap-2">
             <Package className="text-theme-body" size={24} />
-            <p className="text-theme-body text-sm">No currently borrowed items</p>
+            <p className="text-theme-body text-sm">
+              No currently borrowed items
+            </p>
           </div>
         )}
       </div>
 
       {/* Borrow History Section */}
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-theme-heading mb-4">
-          Borrow History
-        </h2>
+      {borrowHistory.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-theme-heading mb-4">
+            Borrow History
+          </h2>
 
-        {borrowHistory.length > 0 ? (
           <div className="space-y-3">
             {borrowHistory.map((item: UserHistory) => (
               <div
                 key={item.transaction_id}
                 className="bg-theme-secondary rounded-2xl p-4"
               >
-                <h3 className="font-bold text-theme-heading text-base mb-2">
-                  {item.item_name}
-                </h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="font-bold text-theme-heading text-base">
+                    {item.item_name}
+                  </h3>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${
+                      item.status === "completed"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {item.status === "completed" ? "✓ Completed" : "✗ Rejected"}
+                  </span>
+                </div>
                 <p className="text-sm text-theme-description mb-1">
-                  Issued date: {formatDate(item.borrow_date)}
+                  Borrowed: {formatDate(item.borrow_date)}
                 </p>
                 <p className="text-sm text-theme-description">
-                  Return date: {formatDate(item.return_date)}
+                  Returned: {formatDate(item.return_date)}
                 </p>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="w-full inline-flex items-center justify-center py-8 gap-2">
-            <Package className="text-theme-body" size={24} />
-            <p className="text-theme-body text-sm">No borrow history yet</p>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

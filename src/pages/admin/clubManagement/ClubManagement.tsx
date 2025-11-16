@@ -1,9 +1,13 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useSearchClubDetails } from "../../../entities/clubs";
+import {
+  useSearchClubDetails,
+  useUpdateItemInClub,
+} from "../../../entities/clubs";
 import {
   useSearchItemsInClub,
   useDeleteItem,
   useDeleteItemImages,
+  useSearchItemId,
 } from "../../../entities/items";
 import type { ItemSearchInClub } from "../../../entities/items/types/items.query.types";
 import { Image, Badge, Button, Modal } from "../../../components/ui";
@@ -36,11 +40,24 @@ export default function ClubManagement() {
     name: string;
   } | null>(null);
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    description: "",
+    status: "AVAILABLE" as "AVAILABLE" | "BORROWED" | "UNAVAILABLE",
+    is_high_risk: false,
+    qr_code: "",
+  });
+
   const {
     data: clubDetailsResponse,
     isLoading: isLoadingDetails,
     error: detailsError,
   } = useSearchClubDetails(clubId);
+
+  const { data: itemDetailsResponse, isLoading: isLoadingItemDetails } =
+    useSearchItemId(itemToEdit || 0);
 
   const {
     data: clubItemsResponse,
@@ -150,6 +167,73 @@ export default function ClubManagement() {
   };
 
   const isDeleting = isDeletingItem || isDeletingImages;
+
+  // Edit mutations
+  const { mutate: updateItem, isPending: isUpdating } = useUpdateItemInClub(
+    clubId,
+    itemToEdit || 0
+  );
+
+  const handleEditClick = (itemId: number) => {
+    setItemToEdit(itemId);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditModalOpen(false);
+    setItemToEdit(null);
+    setEditForm({
+      name: "",
+      description: "",
+      status: "AVAILABLE",
+      is_high_risk: false,
+      qr_code: "",
+    });
+  };
+
+  const handleConfirmEdit = () => {
+    if (!itemToEdit) return;
+
+    updateItem(
+      {
+        name: editForm.name,
+        description: editForm.description,
+        status: editForm.status,
+        is_high_risk: editForm.is_high_risk,
+        qr_code: editForm.qr_code,
+      },
+      {
+        onSuccess: () => {
+          showSuccess(`Item "${editForm.name}" updated successfully!`);
+          handleCancelEdit();
+          refetchItems();
+        },
+        onError: (error) => {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : "detail" in error
+              ? error.detail[0]?.msg || "Failed to update item"
+              : "Failed to update item";
+          showError(`Failed to update item: ${errorMessage}`);
+        },
+      }
+    );
+  };
+
+  // Populate form when item details are loaded
+  useEffect(() => {
+    if (itemDetailsResponse && isEditModalOpen) {
+      const item = itemDetailsResponse;
+      setEditForm({
+        name: item.name,
+        description: item.description,
+        status: item.status as "AVAILABLE" | "BORROWED" | "UNAVAILABLE",
+        is_high_risk: item.is_high_risk,
+        qr_code: item.qr_code,
+      });
+    }
+  }, [itemDetailsResponse, isEditModalOpen]);
 
   const isLoading = isLoadingDetails || isLoadingItems;
   const hasError = detailsError || itemsError;
@@ -428,7 +512,7 @@ export default function ClubManagement() {
                       <button
                         onClick={(e) => {
                           e.preventDefault();
-                          navigate(`/moderator/edit-item/${item.id}`);
+                          handleEditClick(item.id);
                         }}
                         className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors text-sm font-medium"
                       >
@@ -520,6 +604,150 @@ export default function ClubManagement() {
             </button>
           </div>
         </div>
+      </Modal>
+
+      {/* Edit Item Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={handleCancelEdit}
+        title="Edit Item"
+        icon={<Edit className="h-5 w-5 text-blue-600" />}
+        titleColor="text-blue-600"
+        maxWidth="md"
+      >
+        {isLoadingItemDetails ? (
+          <div className="py-8 text-center">
+            <div className="inline-block w-6 h-6 border-4 border-theme-purple border-t-transparent rounded-full animate-spin" />
+            <p className="mt-2 text-sm text-neutral-600">
+              Loading item details...
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Name Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Item Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={editForm.name}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, name: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter item name"
+              />
+            </div>
+
+            {/* Description Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={editForm.description}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, description: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                placeholder="Enter item description"
+              />
+            </div>
+
+            {/* Status Select */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={editForm.status}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    status: e.target.value as
+                      | "AVAILABLE"
+                      | "BORROWED"
+                      | "UNAVAILABLE",
+                  })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="AVAILABLE">Available</option>
+                <option value="BORROWED">Borrowed</option>
+                <option value="UNAVAILABLE">Unavailable</option>
+              </select>
+            </div>
+
+            {/* QR Code Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                QR Code <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={editForm.qr_code}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, qr_code: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter QR code"
+              />
+            </div>
+
+            {/* High Risk Checkbox */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_high_risk"
+                checked={editForm.is_high_risk}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, is_high_risk: e.target.checked })
+                }
+                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label
+                htmlFor="is_high_risk"
+                className="text-sm font-medium text-gray-700"
+              >
+                High Risk Item
+              </label>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 justify-end mt-6 pt-4 border-t">
+              <button
+                onClick={handleCancelEdit}
+                disabled={isUpdating}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmEdit}
+                disabled={
+                  isUpdating ||
+                  !editForm.name ||
+                  !editForm.description ||
+                  !editForm.qr_code
+                }
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isUpdating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Edit className="h-4 w-4" />
+                    Update Item
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

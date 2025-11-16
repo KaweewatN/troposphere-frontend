@@ -77,6 +77,7 @@ export function useBorrowItemFromQrCode(clubId: number) {
         path: `/clubs/${clubId}/borrow`,
         body,
       }),
+    retry: false, // Disable automatic retries to prevent duplicate requests
   });
 }
 
@@ -97,5 +98,6 @@ export function useReturnItemFromQrCode(clubId: number) {
         path: `/clubs/${clubId}/return`,
         body,
       }),
+    retry: false, // Disable automatic retries to prevent duplicate requests
   });
 }
