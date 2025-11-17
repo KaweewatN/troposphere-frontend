@@ -7,9 +7,11 @@
   "scripts": {
     "dev": "tsx server.ts",
     "build": "npm run build:client && npm run build:server",
+    "build:spa": "vite build --mode production",
     "build:client": "vite build --ssrManifest --outDir dist/client",
     "build:server": "vite build --ssr src/entry-server.tsx --outDir dist/server --minify false",
     "preview": "cross-env NODE_ENV=production tsx server.ts",
+    "preview:spa": "vite preview",
     "lint": "eslint ."
   },
   "dependencies": {
