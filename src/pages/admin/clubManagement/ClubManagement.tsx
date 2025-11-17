@@ -45,7 +45,7 @@ export default function ClubManagement() {
   const [editForm, setEditForm] = useState({
     name: "",
     description: "",
-    status: "AVAILABLE" as "AVAILABLE" | "BORROWED" | "UNAVAILABLE",
+    status: "AVAILABLE" as "AVAILABLE" | "UNAVAILABLE",
     is_high_risk: false,
     qr_code: "",
   });
@@ -114,7 +114,17 @@ export default function ClubManagement() {
   // Delete mutations
   const { mutate: deleteItem, isPending: isDeletingItem } = useDeleteItem({
     onSuccess: () => {
-      deleteItemImages({ itemId: itemToDelete?.id.toString() || "" });
+      // After item deletion, delete its images if any exist
+      const item = allItems.find((i) => i.id === itemToDelete?.id);
+      if (item?.images && item.images.length > 0) {
+        deleteItemImages(item.images);
+      } else {
+        // No images to delete, show success immediately
+        showSuccess(`Item "${itemToDelete?.name}" deleted successfully!`);
+        setIsDeleteModalOpen(false);
+        setItemToDelete(null);
+        refetchItems();
+      }
     },
     onError: (error) => {
       const errorMessage =
@@ -130,7 +140,7 @@ export default function ClubManagement() {
   });
 
   const { mutate: deleteItemImages, isPending: isDeletingImages } =
-    useDeleteItemImages({
+    useDeleteItemImages(itemToDelete?.id || 0, {
       onSuccess: () => {
         showSuccess(`Item "${itemToDelete?.name}" deleted successfully!`);
         setIsDeleteModalOpen(false);
@@ -228,7 +238,7 @@ export default function ClubManagement() {
       setEditForm({
         name: item.name,
         description: item.description,
-        status: item.status as "AVAILABLE" | "BORROWED" | "UNAVAILABLE",
+        status: item.status as "AVAILABLE" | "UNAVAILABLE",
         is_high_risk: item.is_high_risk,
         qr_code: item.qr_code,
       });
@@ -665,10 +675,7 @@ export default function ClubManagement() {
                 onChange={(e) =>
                   setEditForm({
                     ...editForm,
-                    status: e.target.value as
-                      | "AVAILABLE"
-                      | "BORROWED"
-                      | "UNAVAILABLE",
+                    status: e.target.value as "AVAILABLE" | "UNAVAILABLE",
                   })
                 }
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

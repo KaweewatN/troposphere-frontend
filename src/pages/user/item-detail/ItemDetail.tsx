@@ -15,6 +15,8 @@ import {
   Shield,
   Building2,
   Heart,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
 import { useUserProfile } from "../../../hooks/useUserProfile";
@@ -26,6 +28,7 @@ export default function ItemDetail() {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const { data: itemData, isLoading, error } = useSearchItemId(itemId);
   const { memberships } = useUserProfile();
@@ -144,6 +147,32 @@ export default function ItemDetail() {
     setIsQRScannerOpen(false);
   };
 
+  // Use sample images for testing if no images available
+  const sampleImages = [
+    "https://troposphere-store.s3.us-east-1.amazonaws.com/items/uPBd2buV7WwzL46jA44kpV-650-80.jpg.webp",
+    "https://troposphere-store.s3.us-east-1.amazonaws.com/items/cn-0582c002_1.avif",
+  ];
+
+  const displayImages =
+    itemData?.images && itemData.images.length > 0
+      ? itemData.images
+      : sampleImages;
+
+  const totalImages = displayImages.length;
+  const hasMultipleImages = totalImages > 1;
+
+  // Handle image navigation
+  const handlePreviousImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? displayImages.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === displayImages.length - 1 ? 0 : prev + 1
+    );
+  };
   return (
     <div className="container mx-auto max-w-screen-lg pb-24">
       {/* Back Button */}
@@ -157,17 +186,66 @@ export default function ItemDetail() {
         </button>
       </div>
 
-      {/* Item Image */}
-      <div className="relative w-full bg-gray-100 rounded-2xl overflow-hidden mb-6">
+      {/* Item Image Carousel */}
+      <div className="relative w-full bg-gray-100 rounded-2xl overflow-hidden mb-6 group">
         <div className="aspect-video relative">
-          {itemData.images && itemData.images.length > 0 ? (
-            <Image
-              src={itemData.images[0]}
-              alt={itemData.name}
-              fill
-              objectFit="cover"
-              className="absolute inset-0"
-            />
+          {displayImages && displayImages.length > 0 ? (
+            <>
+              <Image
+                src={displayImages[currentImageIndex]}
+                alt={`${itemData.name} - Image ${currentImageIndex + 1}`}
+                fill
+                objectFit="cover"
+                className="absolute inset-0"
+              />
+
+              {/* Previous Button */}
+              {hasMultipleImages && (
+                <button
+                  onClick={handlePreviousImage}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+              )}
+
+              {/* Next Button */}
+              {hasMultipleImages && (
+                <button
+                  onClick={handleNextImage}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              )}
+
+              {/* Image Counter */}
+              {hasMultipleImages && (
+                <div className="absolute bottom-4 right-4 px-3 py-1.5 rounded-full bg-black/60 text-white text-sm font-medium">
+                  {currentImageIndex + 1} / {totalImages}
+                </div>
+              )}
+
+              {/* Image Indicators */}
+              {hasMultipleImages && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                  {displayImages.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        index === currentImageIndex
+                          ? "bg-white w-6"
+                          : "bg-white/50 hover:bg-white/75"
+                      }`}
+                      aria-label={`Go to image ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <Package className="h-24 w-24 text-gray-300" />

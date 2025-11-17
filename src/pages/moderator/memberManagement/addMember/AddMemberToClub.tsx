@@ -70,7 +70,7 @@ export default function AddMemberToClub() {
               `${userResponse.name} has been added as ${roleName} successfully!`
             );
             setTimeout(() => {
-              navigate(`/admin/${clubId}/member-management`);
+              navigate(`/moderator/${clubId}/member-management`);
               window.location.reload();
             }, 500);
           },

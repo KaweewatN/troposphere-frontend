@@ -1,20 +1,28 @@
 // Request payloads
 export interface BorrowItemRequest {
-    club_id: number;
-    item_id: number;
-    qr_code: string;
-    return_date: string; // ISO date string format: "YYYY-MM-DDTHH:mm:ss.sssZ"
+  club_id: number;
+  item_id: number;
+  qr_code: string;
+  return_date: string; // ISO date string format: "YYYY-MM-DDTHH:mm:ss.sssZ"
 }
 
 // Response payloads
 export interface BorrowItemResponse {
-    message: string;
-    item_name: string;
+  message: string;
+  item_name: string;
 }
 // Item mutation types
 export interface UploadItemImagesResponse {
   message: string;
   uploaded_images: string[];
+}
+
+export interface DeleteItemImagesRequest {
+  image_urls: string[];
+}
+
+export interface DeleteItemImagesResponse {
+  message: string;
 }
 
 export interface ApproveItemTransactionRequest {

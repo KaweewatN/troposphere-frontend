@@ -96,7 +96,7 @@ export default function SearchClubs() {
               <Link to={`/clubs/${club.id}`} key={club.id}>
                 <Card
                   key={club.id}
-                  imageUrl={club.imageUrl}
+                  imageUrl={club.image_path}
                   name={club.name}
                   description={club.description}
                 />
