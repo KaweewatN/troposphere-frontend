@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
 
   // Proxy all API requests to avoid CORS issues in development
@@ -46,10 +46,16 @@ export default defineConfig({
   },
 
   build: {
-    minify: false, // Disable minification for SSR
+    minify: true,
+    outDir: "dist",
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
   },
   esbuild: {
     jsx: "automatic",
     jsxDev: false, // Force production JSX runtime
   },
-});
+}));
