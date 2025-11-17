@@ -24,7 +24,7 @@ if (window.__REACT_QUERY_STATE__) {
 hydrateRoot(
   document.getElementById("root")!,
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_relativeSplatPath: true }}>
       <App queryClient={queryClient} />
     </BrowserRouter>
   </StrictMode>

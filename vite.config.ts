@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
 
   // Proxy all API requests to avoid CORS issues in development
+  // Use bypass function to prevent proxying for page routes
   server: {
     proxy: {
       "/auth": {
@@ -16,14 +17,30 @@ export default defineConfig({
       "/clubs": {
         target: "http://localhost:8000",
         changeOrigin: true,
+        bypass: (req) => {
+          // Only proxy API requests (exclude HTML requests for frontend routes)
+          if (req.headers.accept?.includes("text/html")) {
+            return req.url;
+          }
+        },
       },
       "/items": {
         target: "http://localhost:8000",
         changeOrigin: true,
+        bypass: (req) => {
+          if (req.headers.accept?.includes("text/html")) {
+            return req.url;
+          }
+        },
       },
       "/users": {
         target: "http://localhost:8000",
         changeOrigin: true,
+        bypass: (req) => {
+          if (req.headers.accept?.includes("text/html")) {
+            return req.url;
+          }
+        },
       },
     },
   },

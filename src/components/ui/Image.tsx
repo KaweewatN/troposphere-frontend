@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import type { ImgHTMLAttributes } from "react";
 import { clsx } from "clsx";
 
+const DEFAULT_IMAGE_PATH = "/images/static/default-image.png";
+
 export interface ImageProps
   extends Omit<
     ImgHTMLAttributes<HTMLImageElement>,
@@ -52,7 +54,7 @@ export const Image: React.FC<ImageProps> = ({
   sizes,
   className,
   style,
-  defaultImage, // Default image URL
+  defaultImage = DEFAULT_IMAGE_PATH, // Use constant as default
   ...props
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -61,6 +63,9 @@ export const Image: React.FC<ImageProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Use default image if no src provided
+  const imageSrc = src || defaultImage;
 
   // Intersection Observer for lazy loading
   useEffect(() => {
@@ -105,8 +110,11 @@ export const Image: React.FC<ImageProps> = ({
 
   // Handle image error
   const handleError = (event: React.SyntheticEvent<HTMLImageElement>) => {
-    setHasError(true);
-    setIsLoading(false);
+    // If the failed image is not already the default, try loading default
+    if (imgRef.current && imgRef.current.src !== defaultImage) {
+      setHasError(true);
+      setIsLoading(false);
+    }
     props.onError?.(event);
   };
 
@@ -169,22 +177,8 @@ export const Image: React.FC<ImageProps> = ({
         />
       )}
 
-      {/* Default image while loading */}
-      {defaultImage && isLoading && !hasError && (
-        <img
-          src={defaultImage}
-          alt="Loading..."
-          aria-hidden="true"
-          style={imageStyle}
-          className={clsx(
-            "transition-opacity duration-300 opacity-100",
-            fill && "absolute inset-0"
-          )}
-        />
-      )}
-
       {/* Loading skeleton */}
-      {!isLoaded && !hasError && !defaultImage && placeholder === "empty" && (
+      {!isLoaded && !hasError && placeholder === "empty" && (
         <div
           className="absolute inset-0 bg-gray-200 animate-pulse"
           style={{ backgroundColor: "#e5e7eb" }}
@@ -192,10 +186,10 @@ export const Image: React.FC<ImageProps> = ({
       )}
 
       {/* Main image */}
-      {isInView && !hasError && (
+      {isInView && (
         <img
           ref={imgRef}
-          src={src}
+          src={hasError ? defaultImage : imageSrc}
           alt={alt}
           loading={priority ? "eager" : loading}
           decoding="async"
@@ -210,50 +204,6 @@ export const Image: React.FC<ImageProps> = ({
           sizes={sizes}
           {...props}
         />
-      )}
-
-      {/* Error state - show default image if available, otherwise show error icon */}
-      {hasError && (
-        <>
-          {defaultImage ? (
-            <img
-              src={defaultImage}
-              alt={alt}
-              style={imageStyle}
-              className={clsx(
-                "transition-opacity duration-300 opacity-100",
-                fill && "absolute inset-0"
-              )}
-            />
-          ) : (
-            <div
-              className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400"
-              style={{
-                backgroundColor: "#f3f4f6",
-                color: "#9ca3af",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <polyline points="21 15 16 10 5 21" />
-              </svg>
-            </div>
-          )}
-        </>
       )}
     </div>
   );

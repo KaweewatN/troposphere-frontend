@@ -1,6 +1,7 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { isAuthenticated } from "../../shared/lib/auth";
 import { useEffect, useState } from "react";
+import { Navigation } from "../navigation";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,6 +15,11 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [isClient, setIsClient] = useState(false);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+  const location = useLocation();
+  const showNavigation =
+    location.pathname !== "/signin" &&
+    location.pathname !== "/auth/google/callback";
 
   useEffect(() => {
     // Mark as client-side after mount
@@ -39,5 +45,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/signin" replace />;
   }
 
-  return <div className="pt-7 px-5">{children}</div>;
+  return (
+    <div className="pt-7 px-5">
+      {children}
+      {showNavigation && <Navigation />}
+    </div>
+  );
 }
