@@ -147,16 +147,12 @@ export default function ItemDetail() {
     setIsQRScannerOpen(false);
   };
 
-  // Use sample images for testing if no images available
-  const sampleImages = [
-    "https://troposphere-store.s3.us-east-1.amazonaws.com/items/uPBd2buV7WwzL46jA44kpV-650-80.jpg.webp",
-    "https://troposphere-store.s3.us-east-1.amazonaws.com/items/cn-0582c002_1.avif",
-  ];
-
+  // Use a default placeholder image if no item images are available
+  const defaultImages = ["/images/illustrations/placeholder.png"];
   const displayImages =
     itemData?.images && itemData.images.length > 0
       ? itemData.images
-      : sampleImages;
+      : defaultImages;
 
   const totalImages = displayImages.length;
   const hasMultipleImages = totalImages > 1;
