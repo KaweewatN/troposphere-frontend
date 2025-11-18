@@ -10,6 +10,40 @@ export default function History() {
 
   const userHistory = historyResponse?.data || [];
 
+  // Should be fixed: for a list of history items, keep only the entry with the
+  // latest (highest) transaction_id for each `item_qr_code`.
+  const getLatestByQR = (items: UserHistory[]) => {
+    const map = new Map<string, UserHistory>();
+
+    items.forEach((item) => {
+      const key = item.item_qr_code ?? String(item.transaction_id);
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, item);
+        return;
+      }
+
+      // Compare transaction_id - prefer the item with the higher (latest) id.
+      // Attempt numeric comparison, fall back to string comparison.
+      const a = Number(existing.transaction_id);
+      const b = Number(item.transaction_id);
+      const isNumeric = Number.isFinite(a) && Number.isFinite(b);
+
+      if (
+        (isNumeric && b > a) ||
+        (!isNumeric &&
+          String(item.transaction_id) > String(existing.transaction_id))
+      ) {
+        map.set(key, item);
+      }
+    });
+
+    return Array.from(map.values());
+  };
+
+  const latestHistory = getLatestByQR(userHistory);
+  console.log("Latest by QR:", latestHistory);
+
   // Format date helper
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -29,22 +63,22 @@ export default function History() {
     return today > dueDate;
   };
 
-  // Categorize items based on status and overdue
-  const overdueItems = userHistory.filter(
+  // Categorize items based on status and overdue using deduped latestHistory
+  const overdueItems = latestHistory.filter(
     (item) => item.status === "approved" && isOverdue(item.return_date)
   );
 
-  const currentlyBorrowed = userHistory.filter(
+  const currentlyBorrowed = latestHistory.filter(
     (item) => item.status === "approved" && !isOverdue(item.return_date)
   );
 
-  const pendingItems = userHistory.filter(
+  const pendingItems = latestHistory.filter(
     (item) =>
       item.status === "pending_approval" ||
       item.status === "pending_condition_check"
   );
 
-  const borrowHistory = userHistory.filter(
+  const borrowHistory = latestHistory.filter(
     (item) => item.status === "completed" || item.status === "rejected"
   );
 

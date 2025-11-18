@@ -1,8 +1,9 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import type { UserHistory } from "../../../entities/users/types";
-import { Badge, Button, QRScanner } from "../../../components/ui";
+import { Badge, Button, QRScanner, showError } from "../../../components/ui";
 import { ArrowLeft, Calendar, Package } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useSearchUserHistory } from "../../../entities/users/api";
 
 export default function ReturnItem() {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +14,23 @@ export default function ReturnItem() {
 
   // Get transaction data from navigation state
   const transaction = location.state?.transaction as UserHistory | undefined;
+
+  // Fetch user history to get item_qr_code
+  const { data: userHistory } = useSearchUserHistory();
+
+  // Find the current transaction in user history
+  // Extend UserHistory type to include item_qr_code for local use
+  type UserHistoryWithQR = UserHistory & { item_qr_code?: string };
+  const currentHistory = userHistory?.data?.find(
+    (h: UserHistoryWithQR) => h.transaction_id === transactionId
+  );
+
+  console.log("Transaction data:", currentHistory);
+
+  // Use item_qr_code from history (fallback to undefined if not present)
+  const item_qr_code = (currentHistory as UserHistoryWithQR)?.item_qr_code;
+
+  console.log("User history data:", userHistory);
 
   // Redirect if no transaction data
   useEffect(() => {
@@ -62,16 +80,25 @@ export default function ReturnItem() {
 
   const category = getCategory(transaction.item_name);
 
-  // Handle QR scan
+  // Handle QR scan and validate
   const handleQRScan = (qrCode: string) => {
     setIsQRScannerOpen(false);
-
-    // Navigate to confirmation page with QR code and transaction in state
-    // QR validation will happen in the confirmation page when calling the API
+    // Validate scanned QR code matches item_qr_code from user history
+    if (!item_qr_code) {
+      showError("Unable to validate item QR code.");
+      return;
+    }
+    if (qrCode !== item_qr_code) {
+      showError("Scanned QR code does not match this item.");
+      return;
+    }
+    // Pass item_club_id and item_qr_code to confirmation page
     navigate(`/items/return/${transactionId}/confirm`, {
       state: {
         scannedQrCode: qrCode,
         transaction: transaction,
+        item_club_id: transaction.item_club_id,
+        item_qr_code: item_qr_code,
       },
     });
   };

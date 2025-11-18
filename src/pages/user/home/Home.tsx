@@ -1,30 +1,31 @@
 import { Link, useNavigate } from "react-router-dom";
 import {
   useSearchUserClubs,
-  useSearchUserHistory,
+  // useSearchUserHistory,
 } from "../../../entities/users";
-import { Image } from "../../../components/ui";
-import type { UserHistory } from "../../../entities/users/types";
+// import { Image } from "../../../components/ui";
+// import type { UserHistory } from "../../../entities/users/types";
 import { Card } from "../../../components/ui";
 import SearchBar from "../../../components/ui/searchBar";
 import { WelcomeHeader } from "./components";
-import { formatDate } from "./utils/getCurrentDate";
-import { Package, SquareLibrary } from "lucide-react";
+// import { formatDate } from "./utils/getCurrentDate";
+// import { Package, SquareLibrary } from "lucide-react";
+import { SquareLibrary } from "lucide-react";
 
 export default function Home() {
   const navigate = useNavigate();
   const { data: clubsResponse, isLoading: isLoadingClubs } =
     useSearchUserClubs();
-  const { data: historyResponse, isLoading: isLoadingHistory } =
-    useSearchUserHistory();
+  // const { data: historyResponse, isLoading: isLoadingHistory } =
+  //   useSearchUserHistory();
 
   const userClubs = clubsResponse?.data || [];
-  const userHistory = historyResponse?.data || [];
+  // const userHistory = historyResponse?.data || [];
 
   // Filter only approved borrowed items
-  const approvedBorrowedItems = userHistory.filter(
-    (item) => item.status === "approved"
-  );
+  // const approvedBorrowedItems = userHistory.filter(
+  //   (item) => item.status === "approved"
+  // );
 
   // Handle search - navigate to search page with query
   const handleSearch = (query: string) => {
@@ -48,9 +49,9 @@ export default function Home() {
       </div>
 
       {/* My Borrowed Items */}
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <h2 className="text-lg font-semibold text-theme-heading mb-4">
-          My Borrowed Items
+          Currently Borrowed Items
         </h2>
 
         {isLoadingHistory ? (
@@ -94,7 +95,7 @@ export default function Home() {
             <p className="text-theme-body text-sm">No borrowed items yet</p>
           </div>
         )}
-      </div>
+      </div> */}
 
       {/* My Clubs */}
       <div className="mb-6">

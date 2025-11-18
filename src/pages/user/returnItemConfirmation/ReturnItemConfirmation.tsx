@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import type { UserHistory } from "../../../entities/users/types";
 import { useReturnItemFromQrCode } from "../../../entities/clubs";
-import { Button, showError } from "../../../components/ui";
+import { Button, showError, showSuccess } from "../../../components/ui";
 import { Calendar, ChevronLeft, Package } from "lucide-react";
 import { useUserProfile } from "../../../hooks";
 
@@ -15,14 +15,21 @@ export default function ReturnItemConfirmation() {
   const [returnDate] = useState<Date>(new Date());
   const isSubmittingRef = useRef(false);
 
-  // Get transaction and scanned QR code from navigation state
+  // Get transaction, scanned QR code, and item info from navigation state
   const transaction = (location.state as { transaction?: UserHistory })
     ?.transaction;
   const scannedQrCode = (location.state as { scannedQrCode?: string })
     ?.scannedQrCode;
+  const item_club_id = (location.state as { item_club_id?: number })
+    ?.item_club_id;
+  const item_qr_code = (location.state as { item_qr_code?: string })
+    ?.item_qr_code;
 
   const { name: userName } = useUserProfile();
-  const returnMutation = useReturnItemFromQrCode(transaction?.club_id || 0);
+  // Use item_club_id for mutation parameter
+  const returnMutation = useReturnItemFromQrCode(
+    item_club_id || transaction?.item_club_id || 0
+  );
 
   // Protect the page - redirect if no QR code was scanned or no transaction data
   useEffect(() => {
@@ -46,7 +53,7 @@ export default function ReturnItemConfirmation() {
       return;
     }
 
-    if (!scannedQrCode || !transaction) {
+    if (!scannedQrCode || !transaction || !item_qr_code) {
       showError("Invalid return request");
       navigate(`/history`, { replace: true });
       return;
@@ -56,17 +63,17 @@ export default function ReturnItemConfirmation() {
 
     try {
       const payload = {
-        qr_code: scannedQrCode,
+        qr_code: item_qr_code,
       };
-
       // Use mutateAsync to await the result
       await returnMutation.mutateAsync(payload);
+      // Show success toast
+      showSuccess("Item returned successfully!");
     } catch (error: unknown) {
+      showError("Return failed. Please try again.");
       console.error("Return error:", error);
     } finally {
       isSubmittingRef.current = false;
-
-      // Always navigate to history page and reload
       queryClient.invalidateQueries({ queryKey: ["history", "users"] });
       queryClient.invalidateQueries({
         queryKey: ["items", transaction.item_id],

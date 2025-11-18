@@ -115,7 +115,15 @@ app.use("*", async (req: Request, res: Response) => {
       .replace(`<!--app-head-->`, stateScript)
       .replace(`<!--app-html-->`, appHtml);
 
-    res.status(200).set({ "Content-Type": "text/html" }).send(html);
+    // Send CSP header so browsers that ignore meta CSP (notably some iOS/Safari versions)
+    // will still receive the `upgrade-insecure-requests` directive.
+    res
+      .status(200)
+      .set({
+        "Content-Type": "text/html",
+        "Content-Security-Policy": "upgrade-insecure-requests",
+      })
+      .send(html);
   } catch (e) {
     const error = e as Error;
     vite?.ssrFixStacktrace(error);
